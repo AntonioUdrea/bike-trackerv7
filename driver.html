@@ -29,19 +29,20 @@
         let routeStops = [];
         let currentStopIndex = 0;
         let currentRouteName = '';
+        let wakeLock = null;
 
         function updateHeader() {
-                const now = new Date();
-                const months = ['ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'];
-                const day = now.getDate();
-                const month = months[now.getMonth()];
-                const hours = now.getHours().toString().padStart(2, '0');
-                const mins = now.getMinutes().toString().padStart(2, '0');
-                document.getElementById('headerDate').textContent = `${day} ${month}, ${hours}:${mins}`;
-            }
+            const now = new Date();
+            const months = ['ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'];
+            const day = now.getDate();
+            const month = months[now.getMonth()];
+            const hours = now.getHours().toString().padStart(2, '0');
+            const mins = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('headerDate').textContent = `${day} ${month}, ${hours}:${mins}`;
+        }
 
-            updateHeader();
-            setInterval(updateHeader, 1000);
+        updateHeader();
+        setInterval(updateHeader, 1000);
 
         window.selectRoute = function(geojsonFile, routeName) {
             currentRouteName = routeName;
@@ -85,8 +86,7 @@
 
             if (currentStopIndex < routeStops.length) {
                 const status = getTimeStatus(routeStops[currentStopIndex].properties.scheduledTime);
-                const latenessEl = document.getElementById('latenessDisplay');
-                latenessEl.textContent = status.text;
+                document.getElementById('latenessDisplay').textContent = status.text;
             }
         }
 
@@ -97,13 +97,25 @@
             scheduled.setHours(h, m, 0, 0);
             const diffMins = Math.round((now - scheduled) / 60000);
 
-            if (Math.abs(diffMins) <= 1) return { text: '0' };
+            if (diffMins === 0) return { text: 'La timp' };
             if (diffMins > 0) return { text: `+${diffMins}'` };
             return { text: `${diffMins}'` };
         }
 
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                } catch (err) {
+                    console.log('Wake lock failed:', err);
+                }
+            }
+        }
+
         function startTracking() {
             if (!navigator.geolocation) return;
+
+            requestWakeLock();
 
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
@@ -112,11 +124,29 @@
                     pushToFirebase(latitude, longitude);
                     renderStops();
                 },
-                (error) => console.error(error.message),
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                (error) => {
+                    console.error(error.message);
+                    // If watch dies, clear and retry after 3 seconds
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                    setTimeout(() => {
+                        if (routeStops.length > 0) startTracking();
+                    }, 3000);
+                },
+                { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
             );
 
             timerInterval = setInterval(() => renderStops(), 5000);
+
+            // Restart watch if page comes back into focus
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    requestWakeLock();
+                    if (watchId === null && routeStops.length > 0) {
+                        startTracking();
+                    }
+                }
+            });
         }
 
         function pushToFirebase(lat, lng) {
@@ -155,6 +185,7 @@
         window.endRoute = function() {
             if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
             if (timerInterval !== null) { clearInterval(timerInterval); timerInterval = null; }
+            if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
             set(busRef, { active: false });
             routeStops = [];
             currentStopIndex = 0;
@@ -195,23 +226,23 @@
 
     <!-- DRIVER SCREEN -->
     <div id="driverScreen" class="driverDisplay">
-    <div class="driverHeader">
-        <div class="headerDate" id="headerDate">--</div>
-        <div class="headerStatus">✓ 3G &nbsp; ✓ GPS 1/1</div>
-    </div>
+        <div class="driverHeader">
+            <div class="headerDate" id="headerDate">--</div>
+            <div class="headerStatus">✓ 3G &nbsp; ✓ GPS 1/1</div>
+        </div>
 
-            <div class="driverTop">
-            
-                <div class="leftPanel">
-                    <div class="routeBox">
-                        <div id="routeNumber">1</div>
-                    </div>
-                    <div id="latenessDisplay" class="latenessDisplay">0</div>
+        <div class="driverTop">
+
+            <div class="leftPanel">
+                <div class="routeBox">
+                    <div id="routeNumber">1</div>
                 </div>
-            
-                <div id="stopList" class="stopList"></div>
-            
+                <div id="latenessDisplay" class="latenessDisplay">0</div>
             </div>
+
+            <div id="stopList" class="stopList"></div>
+
+        </div>
 
         <div class="driverBottom">
             <button class="endRouteBtn" onclick="endRoute()">&#9632; Termina Linia</button>
