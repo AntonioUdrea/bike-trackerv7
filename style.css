@@ -1,201 +1,152 @@
-@font-face {
-  font-family: DejaVuSans; 
-  src: url(DejaVuSans-Bold.ttf);
-}
+<!DOCTYPE html>
+<html>
 
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    font-family: DejaVuSans;
-}
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <title>Map</title>
 
-#routeScreen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    gap: 20px;
-}
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-#routeScreen h1 {
-    font-size: 2rem;
-}
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
+            authDomain: "bike-trackerv7.firebaseapp.com",
+            databaseURL: "https://bike-trackerv7-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "bike-trackerv7",
+            storageBucket: "bike-trackerv7.firebasestorage.app",
+            messagingSenderId: "829142915200",
+            appId: "1:829142915200:web:cd37f3234ecb850421ae65"
+        };
 
-#routeScreen button {
-    padding: 15px 40px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    border: none;
-    background: #007bff;
-    color: white;
-    border-radius: 8px;
-}
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const busRef = ref(db, 'bus');
 
-#mapScreen {
-    height: 100vh;
-    width: 100%;
-}
+        const markerBus = L.icon({
+            iconUrl: 'markerBus.png',
+            iconSize: [75, 65],
+            iconAnchor: [35, 32],
+            popupAnchor: [0, -32],
+        });
 
-#map {
-    height: 100%;
-    width: 100%;
-}
+        let busMarker = null;
 
-#infoPanel {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.75);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 10px;
-    z-index: 9999;
-    font-size: 1rem;
-    text-align: center;
-    pointer-events: none;
-    white-space: nowrap;
-}
+        // Listen for bus location updates in real time
+        onValue(busRef, (snapshot) => {
+            const data = snapshot.val();
 
-/* ---- DRIVER SCREEN ---- */
+            if (!data || !data.active) {
+                // Bus not running — remove marker and hide panel
+                if (busMarker) { map.removeLayer(busMarker); busMarker = null; }
+                document.getElementById('infoPanelContent').innerHTML = 'Nicio cursa activa';
+                return;
+            }
 
-.driverRouteScreen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    gap: 15px;
-    background: #111;
-    color: white;
-}
+            const latlng = [data.lat, data.lng];
 
-.driverDisplay {
-    display: none;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100vh;
-    background: white;
-    color: black;
-    padding: 10px;
-    box-sizing: border-box;
-}
+            if (!busMarker) {
+                busMarker = L.marker(latlng, { icon: markerBus }).addTo(map).bindPopup("").openPopup();
+            } else {
+                busMarker.setLatLng(latlng);
+            }
 
-.driverTop {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    flex: 1;
-    overflow: hidden;
-}
+            // Update popup
+            busMarker.getPopup().setContent(`
+                <b>Urmatoarea statie:</b> ${data.nextStop}<br>
+                <b>Programat:</b> ${data.scheduledTime}<br>
+                <b>Status:</b> ${data.status}
+            `).update();
 
-/* Route box: wider, takes up more horizontal space */
-.routeBox {
-    background: black;
-    color: white;
-    width: 220px;
-    min-width: 220px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    gap: 10px;
-    padding: 10px;
-}
+            // Update info panel
+            const statusColor = data.status.includes('+') ? '#ff6b6b' : data.status.includes('-') ? '#6bff8e' : 'white';
+            document.getElementById('infoPanelContent').innerHTML = `
+                <b>${data.route}</b> &nbsp;|&nbsp;
+                Urmatoarea: <b>${data.nextStop}</b> la <b>${data.scheduledTime}</b> &nbsp;|&nbsp;
+                <span style="color:${statusColor}">${data.status}</span>
+            `;
+        });
+    </script>
+</head>
 
-#routeNumber {
-    font-size: 6rem;
-    font-weight: bold;
-    line-height: 1;
-}
+<body>
 
-.latenessDisplay {
-    font-size: 1.8rem;
-    font-weight: bold;
-}
+    <!-- ROUTE SELECTION SCREEN -->
+    <div id="routeScreen">
+        <h1>Selecteaza Linia</h1>
+        <button onclick="selectRoute('1T.geojson', 'Linia 1 T')">Linia 1  BIG - Leoni 15:10</button>
+        <button onclick="selectRoute('1R.geojson', 'Linia 1 R')">Linia 1  Leoni - BIG 15:40</button>
+        <button onclick="selectRoute('1BT.geojson', 'Linia 1B T')">Linia 1B  BIG - Cuza Voda 18:45</button>
+        <button onclick="selectRoute('1BR.geojson', 'Linia 1B R')">Linia 1B  Cuza Voda - BIG 20:00</button>
+        <button onclick="selectRoute('1T.geojson', 'Linia 1C T')">Linia 1C  BIG - Leoni 15:10</button>
+        <button onclick="selectRoute('1CR.geojson', 'Linia 1C R')">Linia 1C  Leoni - BIG 15:40</button>
+        <button onclick="selectRoute('3T.geojson', 'Linia 3 T')">Linia 3 BIG - Generala 6 18:45</button>
+        <button onclick="selectRoute('3R.geojson', 'Linia 3 R')">Linia 3 Generala 6 - BIG 20:00</button>
+        <button onclick="selectRoute('8T.geojson', 'Linia 8 T')">Linia 8 BIG - Simpozionului 16:00</button>
+        <button onclick="selectRoute('8R.geojson', 'Linia 8 R')">Linia 8 Simpozionului - BIG 16:20</button>
+        <button onclick="selectRoute('test.geojson', 'GARAJ')">GARAJ</button>
+        <button onclick="selectRoute('beclean.geojson', '20 BISTRITA - SIEU MAGHERUS - BECLEAN')">Linia 20 Bistrita - Beclean 11:50</button>
+    </div>
 
-/* Stop list: narrower, doesn't stretch full width */
-.stopList {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    justify-content: flex-start;
-    width: fit-content;
-    min-width: 220px;
-    max-width: 420px;
-}
+    <!-- MAP SCREEN -->
+    <div id="mapScreen" style="display:none;">
+        <div id="map">
+            <div id="infoPanel">
+                <div id="infoPanelContent">Nicio cursa activa</div>
+            </div>
+        </div>
+    </div>
 
-.stopRow {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1rem;
-    padding: 8px 12px;
-    border-radius: 6px;
-    background: #f0f0f0;
-    white-space: nowrap;
-}
+</body>
 
-.stopRow.nextStop {
-    background: black;
-    color: white;
-    font-size: 1.2rem;
-    font-weight: bold;
-}
+<script>
+    // --- Map setup ---
+    var map = L.map('map', { fullscreenControl: true, fullscreenControlOptions: { position: 'topleft' } }).setView([47.132, 24.491], 14);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
 
-.stopIndex {
-    min-width: 24px;
-}
+    var markerIcon = L.icon({
+        iconUrl: 'markerIcon.png',
+        iconSize: [15, 15],
+        iconAnchor: [10, 5],
+        popupAnchor: [-2, -5],
+    });
 
-.stopName {
-    flex: 1;
-}
+    let routeLayer = null;
 
-.stopTime {
-    font-weight: bold;
-    min-width: 50px;
-    text-align: right;
-}
+    // --- Route selection (passengers just view the route, no GPS) ---
+    function selectRoute(geojsonFile, routeName) {
+        document.getElementById('routeScreen').style.display = 'none';
+        document.getElementById('mapScreen').style.display = 'block';
+        map.invalidateSize();
 
-.driverBottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 10px;
-    border-top: 2px solid black;
-    gap: 10px;
-}
+        if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
 
-.endRouteBtn {
-    padding: 10px 20px;
-    font-size: 1rem;
-    background: #cc0000;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
+        fetch(geojsonFile)
+            .then(res => res.json())
+            .then(data => {
+                routeLayer = L.geoJSON(data, {
+                    style: { color: 'black', weight: 5, opacity: 1 },
+                    pointToLayer: (feature, latlng) => {
+                        return L.marker(latlng, { icon: markerIcon });
+                    },
+                    onEachFeature: (feature, layer) => {
+                        if (feature.geometry.type === 'Point') {
+                            layer.bindPopup(`<b>${feature.properties.name}</b><br>${feature.properties.scheduledTime}`);
+                        }
+                    }
+                }).addTo(map);
+            });
+    }
+</script>
 
-.fullscreenBtn {
-    padding: 10px 20px;
-    font-size: 1rem;
-    background: #333;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.plateBox {
-    background: black;
-    color: white;
-    padding: 10px 20px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border-radius: 8px;
-}
-
-
+</html>
