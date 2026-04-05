@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Driver</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, set, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
+            authDomain: "bike-trackerv7.firebaseapp.com",
+            databaseURL: "https://bike-trackerv7-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "bike-trackerv7",
+            storageBucket: "bike-trackerv7.firebasestorage.app",
+            messagingSenderId: "829142915200",
+            appId: "1:829142915200:web:cd37f3234ecb850421ae65"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const busRef = ref(db, 'bus');
+
+        // Mark bus as inactive if driver closes the tab
+        onDisconnect(busRef).set({ active: false });
+
+        // --- State ---
+        let watchId = null;
+        let timerInterval = null;
+        let routeStops = [];
+        let currentStopIndex = 0;
+        let currentRouteName = '';
+
+        // --- Route selection ---
+        window.selectRoute = function(geojsonFile, routeName) {
+            currentRouteName = routeName;
+            document.getElementById('routeScreen').style.display = 'none';
+            document.getElementById('driverScreen').style.display = 'flex';
+
+            fetch(geojsonFile)
+                .then(res => res.json())
+                .then(data => {
+                    routeStops = data.features
+                        .filter(f => f.geometry.type === 'Point')
+                        .sort((a, b) => a.id - b.id);
+                    currentStopIndex = 0;
+                    renderStops();
+                    startTracking();
+                });
+        }
+
+        // --- Render stop list ---
+        function renderStops() {
+            const list = document.getElementById('stopList');
+            list.innerHTML = '';
+
+            // Show current + next 3 stops
+            const visible = routeStops.slice(currentStopIndex, currentStopIndex + 4);
+
+            visible.forEach((stop, i) => {
+                const scheduledTime = stop.properties.scheduledTime;
+                const stopName = stop.properties.name;
+                const status = i === 0 ? getTimeStatus(scheduledTime) : null;
+
+                const row = document.createElement('div');
+                row.className = 'stopRow' + (i === 0 ? ' nextStop' : '');
+                row.innerHTML = `
+                    <span class="stopIndex">${currentStopIndex + i + 1}.</span>
+                    <span class="stopName">${stopName}</span>
+                    <span class="stopTime">${scheduledTime}</span>
+                    ${i === 0 && status ? `<span class="stopStatus" style="color:${status.color}">${status.text}</span>` : ''}
+                `;
+                list.appendChild(row);
+            });
+
+            // Update route number display
+            document.getElementById('routeNumber').textContent = currentRouteName.replace('Linia ', '').split(' ')[0];
+        }
+
+        // --- Time status ---
+        function getTimeStatus(scheduledTime) {
+            const now = new Date();
+            const [h, m] = scheduledTime.split(':').map(Number);
+            const scheduled = new Date();
+            scheduled.setHours(h, m, 0, 0);
+            const diffMins = Math.round((now - scheduled) / 60000);
+
+            if (Math.abs(diffMins) <= 1) return { text: 'La timp', color: 'white' };
+            if (diffMins > 0) return { text: `+${diffMins} min`, color: '#ff6b6b' };
+            return { text: `${diffMins} min`, color: '#6bff8e' };
+        }
+
+        // --- GPS + Firebase ---
+        function startTracking() {
+            if (!navigator.geolocation) return;
+
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    checkStop([latitude, longitude]);
+                    pushToFirebase(latitude, longitude);
+                    renderStops();
+                },
+                (error) => console.error(error.message),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+
+            timerInterval = setInterval(() => {
+                renderStops();
+            }, 5000);
+        }
+
+        function pushToFirebase(lat, lng) {
+            if (currentStopIndex >= routeStops.length) return;
+            const nextStop = routeStops[currentStopIndex];
+            const status = getTimeStatus(nextStop.properties.scheduledTime);
+
+            set(busRef, {
+                active: true,
+                lat,
+                lng,
+                route: currentRouteName,
+                nextStop: nextStop.properties.name,
+                scheduledTime: nextStop.properties.scheduledTime,
+                status: status.text
+            });
+        }
+
+        // --- Stop detection ---
+        function checkStop(latlng) {
+            if (currentStopIndex >= routeStops.length) return;
+
+            const stop = routeStops[currentStopIndex];
+            const stopLatLng = [stop.geometry.coordinates[1], stop.geometry.coordinates[0]];
+            const distance = getDistance(latlng, stopLatLng);
+
+            if (distance <= 30) {
+                currentStopIndex++;
+                if (currentStopIndex >= routeStops.length) {
+                    endRoute();
+                }
+            }
+        }
+
+        function getDistance([lat1, lng1], [lat2, lng2]) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLng/2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        // --- End route ---
+        window.endRoute = function() {
+            if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+            if (timerInterval !== null) { clearInterval(timerInterval); timerInterval = null; }
+            set(busRef, { active: false });
+
+            routeStops = [];
+            currentStopIndex = 0;
+            document.getElementById('driverScreen').style.display = 'none';
+            document.getElementById('routeScreen').style.display = 'flex';
+        }
+
+        window.addEventListener("beforeunload", () => set(busRef, { active: false }));
+    </script>
+</head>
+
+<body>
+
+    <!-- ROUTE SELECTION -->
+    <div id="routeScreen" class="driverRouteScreen">
+        <h1>Selecteaza Linia</h1>
+        <button onclick="selectRoute('1T.geojson', 'Linia 1 T')">Linia 1  BIG - Leoni 15:10</button>
+        <button onclick="selectRoute('1R.geojson', 'Linia 1 R')">Linia 1  Leoni - BIG 15:40</button>
+        <button onclick="selectRoute('1BT.geojson', 'Linia 1B T')">Linia 1B  BIG - Cuza Voda 18:45</button>
+        <button onclick="selectRoute('1BR.geojson', 'Linia 1B R')">Linia 1B  Cuza Voda - BIG 20:00</button>
+        <button onclick="selectRoute('1T.geojson', 'Linia 1C T')">Linia 1C  BIG - Leoni 15:10</button>
+        <button onclick="selectRoute('1CR.geojson', 'Linia 1C R')">Linia 1C  Leoni - BIG 15:40</button>
+        <button onclick="selectRoute('3T.geojson', 'Linia 3 T')">Linia 3 BIG - Generala 6 18:45</button>
+        <button onclick="selectRoute('3R.geojson', 'Linia 3 R')">Linia 3 Generala 6 - BIG 20:00</button>
+        <button onclick="selectRoute('8T.geojson', 'Linia 8 T')">Linia 8 BIG - Simpozionului 16:00</button>
+        <button onclick="selectRoute('8R.geojson', 'Linia 8 R')">Linia 8 Simpozionului - BIG 16:20</button>
+        <button onclick="selectRoute('test.geojson', 'GARAJ')">GARAJ</button>
+    </div>
+
+    <!-- DRIVER SCREEN -->
+    <div id="driverScreen" class="driverDisplay">
+
+        <div class="driverTop">
+            <div class="routeBox">
+                <div id="routeNumber">1</div>
+            </div>
+            <div id="stopList" class="stopList"></div>
+        </div>
+
+        <div class="driverBottom">
+            <button class="endRouteBtn" onclick="endRoute()">&#9632; Termina Linia</button>
+            <div class="plateBox">BN 29 TCB</div>
+        </div>
+
+    </div>
+
+</body>
+</html>
