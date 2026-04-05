@@ -30,6 +30,19 @@
         let currentStopIndex = 0;
         let currentRouteName = '';
 
+        function updateHeader() {
+                const now = new Date();
+                const months = ['ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'];
+                const day = now.getDate();
+                const month = months[now.getMonth()];
+                const hours = now.getHours().toString().padStart(2, '0');
+                const mins = now.getMinutes().toString().padStart(2, '0');
+                document.getElementById('headerDate').textContent = `${day} ${month}, ${hours}:${mins}`;
+            }
+
+            updateHeader();
+            setInterval(updateHeader, 1000);
+
         window.selectRoute = function(geojsonFile, routeName) {
             currentRouteName = routeName;
             document.getElementById('routeScreen').style.display = 'none';
@@ -182,6 +195,10 @@
 
     <!-- DRIVER SCREEN -->
     <div id="driverScreen" class="driverDisplay">
+    <div class="driverHeader">
+        <div class="headerDate" id="headerDate">--</div>
+        <div class="headerStatus">✓ 3G &nbsp; ✓ GPS 1/1</div>
+    </div>
 
             <div class="driverTop">
             
