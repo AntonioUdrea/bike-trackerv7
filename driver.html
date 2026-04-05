@@ -84,9 +84,9 @@
             scheduled.setHours(h, m, 0, 0);
             const diffMins = Math.round((now - scheduled) / 60000);
 
-            if (Math.abs(diffMins) <= 1) return { text: 'La timp' };
-            if (diffMins > 0) return { text: `+${diffMins} min` };
-            return { text: `${diffMins} min` };
+            if (Math.abs(diffMins) <= 1) return { text: '0' };
+            if (diffMins > 0) return { text: `+${diffMins}'` };
+            return { text: `${diffMins}'` };
         }
 
         function startTracking() {
@@ -182,16 +182,18 @@
     <!-- DRIVER SCREEN -->
     <div id="driverScreen" class="driverDisplay">
 
-        <div class="driverTop">
-
-            <div class="routeBox">
-                <div id="routeNumber">1</div>
-                <div id="latenessDisplay" class="latenessDisplay">La timp</div>
+            <div class="driverTop">
+            
+                <div class="leftPanel">
+                    <div class="routeBox">
+                        <div id="routeNumber">1</div>
+                    </div>
+                    <div id="latenessDisplay" class="latenessDisplay">La timp</div>
+                </div>
+            
+                <div id="stopList" class="stopList"></div>
+            
             </div>
-
-            <div id="stopList" class="stopList"></div>
-
-        </div>
 
         <div class="driverBottom">
             <button class="endRouteBtn" onclick="endRoute()">&#9632; Termina Linia</button>
