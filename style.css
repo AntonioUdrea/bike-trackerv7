@@ -162,7 +162,6 @@ html, body {
     justify-content: space-between;
     align-items: center;
     padding-top: 10px;
-    border-top: 2px solid black;
     gap: 10px;
 }
 
@@ -208,7 +207,6 @@ html, body {
     align-items: center;
     padding: 4px 0 8px 0;
     position: relative;
-    border-bottom: 1px solid #ccc;
     margin-bottom: 8px;
 }
 
