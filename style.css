@@ -174,7 +174,6 @@ html, body {
     background: #cc0000;
     color: white;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
 }
 
@@ -184,7 +183,6 @@ html, body {
     background: #333;
     color: white;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
 }
 
@@ -194,7 +192,6 @@ html, body {
     padding: 10px 20px;
     font-size: 1.2rem;
     font-weight: bold;
-    border-radius: 8px;
 }
 
 .leftPanel {
