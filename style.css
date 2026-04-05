@@ -91,63 +91,66 @@ html, body {
     overflow: hidden;
 }
 
-/* Route box: wider, takes up more horizontal space */
 .routeBox {
     background: black;
     color: white;
-    width: 220px;
-    min-width: 220px;
+    width: 260px;
+    min-width: 260px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    gap: 10px;
     padding: 10px;
 }
 
 #routeNumber {
-    font-size: 6rem;
+    font-size: 7rem;
     font-weight: bold;
     line-height: 1;
 }
 
 .latenessDisplay {
-    font-size: 1.8rem;
+    font-size: 2.2rem;
     font-weight: bold;
+    color: black;
+    background: white;
+    width: 100%;
+    text-align: center;
+    padding: 6px 0;
+    border-radius: 0 0 6px 6px;
+    margin-top: 8px;
 }
 
-/* Stop list: narrower, doesn't stretch full width */
 .stopList {
     display: flex;
     flex-direction: column;
     gap: 6px;
     justify-content: flex-start;
-    width: fit-content;
-    min-width: 220px;
-    max-width: 420px;
+    flex: 1;
 }
 
 .stopRow {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 1rem;
+    font-size: 1.4rem;
     padding: 8px 12px;
-    border-radius: 6px;
-    background: #f0f0f0;
+    border-radius: 0;
+    background: transparent;
     white-space: nowrap;
 }
 
 .stopRow.nextStop {
     background: black;
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.6rem;
     font-weight: bold;
+    border-radius: 6px;
 }
 
 .stopIndex {
-    min-width: 24px;
+    min-width: 28px;
 }
 
 .stopName {
@@ -156,7 +159,7 @@ html, body {
 
 .stopTime {
     font-weight: bold;
-    min-width: 50px;
+    min-width: 55px;
     text-align: right;
 }
 
@@ -180,8 +183,8 @@ html, body {
 }
 
 .fullscreenBtn {
-    padding: 10px 20px;
-    font-size: 1rem;
+    padding: 10px 16px;
+    font-size: 1.2rem;
     background: #333;
     color: white;
     border: none;
@@ -197,5 +200,6 @@ html, body {
     font-weight: bold;
     border-radius: 8px;
 }
+
 
 
