@@ -56,7 +56,6 @@
             visible.forEach((stop, i) => {
                 const scheduledTime = stop.properties.scheduledTime;
                 const stopName = stop.properties.name;
-                const status = i === 0 ? getTimeStatus(scheduledTime) : null;
 
                 const row = document.createElement('div');
                 row.className = 'stopRow' + (i === 0 ? ' nextStop' : '');
@@ -68,7 +67,6 @@
                 list.appendChild(row);
             });
 
-            // Update route number and lateness
             const routeNum = currentRouteName.replace('Linia ', '').split(' ')[0];
             document.getElementById('routeNumber').textContent = routeNum;
 
@@ -76,7 +74,6 @@
                 const status = getTimeStatus(routeStops[currentStopIndex].properties.scheduledTime);
                 const latenessEl = document.getElementById('latenessDisplay');
                 latenessEl.textContent = status.text;
-                latenessEl.style.color = status.color;
             }
         }
 
@@ -87,9 +84,9 @@
             scheduled.setHours(h, m, 0, 0);
             const diffMins = Math.round((now - scheduled) / 60000);
 
-            if (Math.abs(diffMins) <= 1) return { text: 'La timp', color: 'white' };
-            if (diffMins > 0) return { text: `+${diffMins} min`, color: '#ff6b6b' };
-            return { text: `${diffMins} min`, color: '#6bff8e' };
+            if (Math.abs(diffMins) <= 1) return { text: 'La timp' };
+            if (diffMins > 0) return { text: `+${diffMins} min` };
+            return { text: `${diffMins} min` };
         }
 
         function startTracking() {
@@ -187,20 +184,18 @@
 
         <div class="driverTop">
 
-            <!-- Left: route number + lateness -->
             <div class="routeBox">
                 <div id="routeNumber">1</div>
                 <div id="latenessDisplay" class="latenessDisplay">La timp</div>
             </div>
 
-            <!-- Right: stop list -->
             <div id="stopList" class="stopList"></div>
 
         </div>
 
         <div class="driverBottom">
             <button class="endRouteBtn" onclick="endRoute()">&#9632; Termina Linia</button>
-            <button class="fullscreenBtn" onclick="toggleFullscreen()">&#x26F6; Fullscreen</button>
+            <button class="fullscreenBtn" onclick="toggleFullscreen()">&#x26F6;</button>
             <div class="plateBox">BN 29 TCB</div>
         </div>
 
