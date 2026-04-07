@@ -44,7 +44,7 @@
         updateHeader();
         setInterval(updateHeader, 1000);
 
-        window.selectRoute = function(geojsonFile, routeName) {
+        window.selectRoute = function (geojsonFile, routeName) {
             currentRouteName = routeName;
             document.getElementById('routeScreen').style.display = 'none';
             document.getElementById('driverScreen').style.display = 'flex';
@@ -97,7 +97,7 @@
             scheduled.setHours(h, m, 0, 0);
             const diffMins = Math.round((now - scheduled) / 60000);
 
-            if (diffMins === 0) return { text: 'La timp' };
+            if (diffMins === 0) return { text: '0' };
             if (diffMins > 0) return { text: `+${diffMins}'` };
             return { text: `${diffMins}'` };
         }
@@ -166,11 +166,20 @@
 
         function checkStop(latlng) {
             if (currentStopIndex >= routeStops.length) return;
-            const stop = routeStops[currentStopIndex];
-            const stopLatLng = [stop.geometry.coordinates[1], stop.geometry.coordinates[0]];
-            if (getDistance(latlng, stopLatLng) <= 30) {
-                currentStopIndex++;
-                if (currentStopIndex >= routeStops.length) endRoute();
+
+            // Check all remaining stops, not just the next one
+            for (let i = currentStopIndex; i < routeStops.length; i++) {
+                const stop = routeStops[i];
+                const stopLatLng = [stop.geometry.coordinates[1], stop.geometry.coordinates[0]];
+                const distance = getDistance(latlng, stopLatLng);
+
+                if (distance <= 30) {
+                    currentStopIndex = i + 1;
+                    if (currentStopIndex >= routeStops.length) {
+                        endRoute();
+                    }
+                    return;
+                }
             }
         }
 
@@ -178,11 +187,11 @@
             const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLng/2) ** 2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
-        window.endRoute = function() {
+        window.endRoute = function () {
             if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
             if (timerInterval !== null) { clearInterval(timerInterval); timerInterval = null; }
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
@@ -193,7 +202,7 @@
             document.getElementById('routeScreen').style.display = 'flex';
         }
 
-        window.toggleFullscreen = function() {
+        window.toggleFullscreen = function () {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen();
             } else {
@@ -210,19 +219,20 @@
     <!-- ROUTE SELECTION -->
     <div id="routeScreen" class="driverRouteScreen">
         <h1>Selecteaza Linia</h1>
-        <button onclick="selectRoute('1T.geojson', 'Linia 1 T')">Linia 1  BIG - Leoni 15:10</button>
-        <button onclick="selectRoute('1R.geojson', 'Linia 1 R')">Linia 1  Leoni - BIG 15:40</button>
-        <button onclick="selectRoute('1BT.geojson', 'Linia 1B T')">Linia 1B  BIG - Cuza Voda 18:45</button>
-        <button onclick="selectRoute('1BR.geojson', 'Linia 1B R')">Linia 1B  Cuza Voda - BIG 20:00</button>
-        <button onclick="selectRoute('1T.geojson', 'Linia 1C T')">Linia 1C  BIG - Leoni 15:10</button>
-        <button onclick="selectRoute('1CR.geojson', 'Linia 1C R')">Linia 1C  Leoni - BIG 15:40</button>
+        <button onclick="selectRoute('1T.geojson', 'Linia 1 T')">Linia 1 BIG - Leoni 15:10</button>
+        <button onclick="selectRoute('1R.geojson', 'Linia 1 R')">Linia 1 Leoni - BIG 15:40</button>
+        <button onclick="selectRoute('1BT.geojson', 'Linia 1B T')">Linia 1B BIG - Cuza Voda 18:45</button>
+        <button onclick="selectRoute('1BR.geojson', 'Linia 1B R')">Linia 1B Cuza Voda - BIG 20:00</button>
+        <button onclick="selectRoute('1T.geojson', 'Linia 1C T')">Linia 1C BIG - Leoni 15:10</button>
+        <button onclick="selectRoute('1CR.geojson', 'Linia 1C R')">Linia 1C Leoni - BIG 15:40</button>
         <button onclick="selectRoute('3T.geojson', 'Linia 3 T')">Linia 3 BIG - Generala 6 18:45</button>
         <button onclick="selectRoute('3R.geojson', 'Linia 3 R')">Linia 3 Generala 6 - BIG 20:00</button>
         <button onclick="selectRoute('8T.geojson', 'Linia 8 T')">Linia 8 BIG - Simpozionului 16:00</button>
         <button onclick="selectRoute('8R.geojson', 'Linia 8 R')">Linia 8 Simpozionului - BIG 16:20</button>
         <button onclick="selectRoute('sigmir.geojson', '21')">Sigmir</button>
         <button onclick="selectRoute('test.geojson', 'GARAJ')">GARAJ</button>
-        <button onclick="selectRoute('beclean.geojson', '20 BISTRITA - SIEU MAGHERUS - BECLEAN')">Linia 20 Bistrita - Beclean 11:50</button>
+        <button onclick="selectRoute('beclean.geojson', '20 BISTRITA - SIEU MAGHERUS - BECLEAN')">Linia 20 Bistrita -
+            Beclean 11:50</button>
     </div>
 
     <!-- DRIVER SCREEN -->
@@ -246,7 +256,7 @@
         </div>
 
         <div class="driverBottom">
-            <button class="endRouteBtn" onclick="endRoute()">&#9632; Termina Linia</button>
+            <button class="endRouteBtn" onclick="endRoute()">&#9632;</button>
             <button class="fullscreenBtn" onclick="toggleFullscreen()">&#x26F6;</button>
             <div class="plateBox">BN 29 TCB</div>
         </div>
@@ -254,4 +264,5 @@
     </div>
 
 </body>
+
 </html>
