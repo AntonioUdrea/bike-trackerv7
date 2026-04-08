@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.css" />
     <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.js"></script>
     <link rel="stylesheet" href="style.css">
     <title>Map</title>
@@ -78,29 +78,35 @@
 
 <body>
 
-    <!-- ROUTE SELECTION SCREEN -->
-    <div id="routeScreen">
-        <h1>Selecteaza Linia</h1>
-        <button onclick="selectRoute('1T.geojson', 'Linia 1 T')">Linia 1  BIG - Leoni 15:10</button>
-        <button onclick="selectRoute('1R.geojson', 'Linia 1 R')">Linia 1  Leoni - BIG 15:40</button>
-        <button onclick="selectRoute('1BT.geojson', 'Linia 1B T')">Linia 1B  BIG - Cuza Voda 18:45</button>
-        <button onclick="selectRoute('1BR.geojson', 'Linia 1B R')">Linia 1B  Cuza Voda - BIG 20:00</button>
-        <button onclick="selectRoute('1T.geojson', 'Linia 1C T')">Linia 1C  BIG - Leoni 15:10</button>
-        <button onclick="selectRoute('1CR.geojson', 'Linia 1C R')">Linia 1C  Leoni - BIG 15:40</button>
-        <button onclick="selectRoute('3T.geojson', 'Linia 3 T')">Linia 3 BIG - Generala 6 18:45</button>
-        <button onclick="selectRoute('3R.geojson', 'Linia 3 R')">Linia 3 Generala 6 - BIG 20:00</button>
-        <button onclick="selectRoute('8T.geojson', 'Linia 8 T')">Linia 8 BIG - Simpozionului 16:00</button>
-        <button onclick="selectRoute('8R.geojson', 'Linia 8 R')">Linia 8 Simpozionului - BIG 16:20</button>
-    </div>
-
-    <!-- MAP SCREEN -->
-    <div id="mapScreen" style="display:none;">
+    <!-- MAP (always visible) -->
+    <div id="mapScreen">
         <div id="map">
             <div id="infoPanel">
                 <div id="infoPanelContent">Nicio cursa activa</div>
             </div>
         </div>
     </div>
+
+    <!-- HAMBURGER BUTTON -->
+    <button id="menuBtn" onclick="toggleMenu()">☰</button>
+
+    <!-- SIDE MENU -->
+    <div id="sideMenu">
+        <div class="menuHeader">Selecteaza Linia</div>
+        <button onclick="selectRoute('1T.geojson', 'Linia 1 T')">1 BIG - Leoni 15:10</button>
+        <button onclick="selectRoute('1R.geojson', 'Linia 1 R')">1 Leoni - BIG 15:40</button>
+        <button onclick="selectRoute('1BT.geojson', 'Linia 1B T')">1B BIG - Cuza Voda 18:45</button>
+        <button onclick="selectRoute('1BR.geojson', 'Linia 1B R')">1B Cuza Voda - BIG 20:00</button>
+        <button onclick="selectRoute('1T.geojson', 'Linia 1C T')">1C BIG - Leoni 15:10</button>
+        <button onclick="selectRoute('1CR.geojson', 'Linia 1C R')">1C Leoni - BIG 15:40</button>
+        <button onclick="selectRoute('3T.geojson', 'Linia 3 T')">3 BIG - Generala 6 18:45</button>
+        <button onclick="selectRoute('3R.geojson', 'Linia 3 R')">3 Generala 6 - BIG 20:00</button>
+        <button onclick="selectRoute('8T.geojson', 'Linia 8 T')">8 BIG - Simpozionului 16:00</button>
+        <button onclick="selectRoute('8R.geojson', 'Linia 8 R')">8 Simpozionului - BIG 16:20</button>
+    </div>
+
+    <!-- OVERLAY to close menu when clicking outside -->
+    <div id="menuOverlay" onclick="toggleMenu()"></div>
 
 </body>
 
@@ -123,10 +129,7 @@
 
     // --- Route selection (passengers just view the route, no GPS) ---
     function selectRoute(geojsonFile, routeName) {
-        document.getElementById('routeScreen').style.display = 'none';
-        document.getElementById('mapScreen').style.display = 'block';
-        map.invalidateSize();
-
+        toggleMenu(); // close menu
         if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
 
         fetch(geojsonFile)
@@ -134,9 +137,7 @@
             .then(data => {
                 routeLayer = L.geoJSON(data, {
                     style: { color: 'black', weight: 5, opacity: 1 },
-                    pointToLayer: (feature, latlng) => {
-                        return L.marker(latlng, { icon: markerIcon });
-                    },
+                    pointToLayer: (feature, latlng) => L.marker(latlng, { icon: markerIcon }),
                     onEachFeature: (feature, layer) => {
                         if (feature.geometry.type === 'Point') {
                             layer.bindPopup(`<b>${feature.properties.name}</b><br>${feature.properties.scheduledTime}`);
@@ -144,6 +145,14 @@
                     }
                 }).addTo(map);
             });
+    }
+
+    function toggleMenu() {
+        const menu = document.getElementById('sideMenu');
+        const overlay = document.getElementById('menuOverlay');
+        const isOpen = menu.classList.contains('open');
+        menu.classList.toggle('open');
+        overlay.classList.toggle('open');
     }
 </script>
 
