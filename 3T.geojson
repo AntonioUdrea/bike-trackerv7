@@ -1,1 +1,95 @@
-{"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":{"coordinates":[[24.48506120248814,47.126844998934956],[24.491053008948313,47.13005355187465],[24.491358207546682,47.12994546635758],[24.49146272761476,47.130036485754914],[24.491253687478604,47.13028394395465],[24.495090885433825,47.132266493474845],[24.496557496295708,47.133158308188456],[24.499403656265287,47.1351800119584],[24.500063865906554,47.13483171255584],[24.500111023737645,47.134368837451376],[24.500279444564654,47.1343138421214],[24.50065670721736,47.134510908456434],[24.502492570730084,47.13531437976471],[24.504597663721484,47.13636619064809],[24.505291005928655,47.13713000806524],[24.505945026705632,47.13677409085551]],"type":"LineString"}},{"type":"Feature","properties":{"name":"BIG","scheduledTime":"07:30"},"geometry":{"coordinates":[24.485070436929618,47.12682676215809],"type":"Point"},"id":1},{"type":"Feature","properties":{"name":"Șincai","scheduledTime":"07:35"},"geometry":{"coordinates":[24.492029785170644,47.13075202352201],"type":"Point"},"id":2},{"type":"Feature","properties":{"name":"Dornei Pasaj VI","scheduledTime":"07:38"},"geometry":{"coordinates":[24.497960254460793,47.13410792663811],"type":"Point"},"id":3},{"type":"Feature","properties":{"name":"Domus","scheduledTime":"07:41"},"geometry":{"coordinates":[24.500857395965426,47.13460833329168],"type":"Point"},"id":4},{"type":"Feature","properties":{"name":"Generală 6","scheduledTime":"07:45"},"geometry":{"coordinates":[24.505941763631114,47.13677632109162],"type":"Point"},"id":5}]}
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BIG",
+        "scheduledTime": "07:30"
+      },
+      "geometry": {
+        "coordinates": [
+          24.485065777697912,
+          47.126891288740495
+        ],
+        "type": "Point"
+      },
+      "id": 0
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Șincai",
+        "scheduledTime": "07:35"
+      },
+      "geometry": {
+        "coordinates": [
+          24.492027178807547,
+          47.13080070155351
+        ],
+        "type": "Point"
+      },
+      "id": 1
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Dornei Pasaj VI",
+        "scheduledTime": "07:38"
+      },
+      "geometry": {
+        "coordinates": [
+          24.49791831961008,
+          47.134115055722106
+        ],
+        "type": "Point"
+      },
+      "id": 2
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Domus",
+        "scheduledTime": "07:41"
+      },
+      "geometry": {
+        "coordinates": [
+          24.500801436607276,
+          47.13454662160845
+        ],
+        "type": "Point"
+      },
+      "id": 3
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Școala Generală 6",
+        "scheduledTime": "07:45"
+      },
+      "geometry": {
+        "coordinates": [
+          24.505792665462764,
+          47.13746877001981
+        ],
+        "type": "Point"
+      },
+      "id": 4
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Grănicerilor Dr. Max",
+        "scheduledTime": "07:48"
+      },
+      "geometry": {
+        "coordinates": [
+          24.507509335743265,
+          47.14046961867467
+        ],
+        "type": "Point"
+      },
+      "id": 5
+    }
+  ]
+}
