@@ -5,7 +5,7 @@
             "type": "Feature",
             "properties": {
                 "name": "BIG",
-                "scheduledTime": "20:10"
+                "scheduledTime": "14:15"
             },
             "geometry": {
                 "coordinates": [
@@ -20,7 +20,7 @@
             "type": "Feature",
             "properties": {
                 "name": "Șincai",
-                "scheduledTime": "20:06"
+                "scheduledTime": "14:11"
             },
             "geometry": {
                 "coordinates": [
@@ -35,7 +35,7 @@
             "type": "Feature",
             "properties": {
                 "name": "Dornei Pasaj VI",
-                "scheduledTime": 20.04
+                "scheduledTime": 14:09
             },
             "geometry": {
                 "coordinates": [
@@ -50,7 +50,7 @@
             "type": "Feature",
             "properties": {
                 "name": "Domus",
-                "scheduledTime": "20:02"
+                "scheduledTime": "14:07"
             },
             "geometry": {
                 "coordinates": [
@@ -65,7 +65,7 @@
             "type": "Feature",
             "properties": {
                 "name": "Generală 6",
-                "scheduledTime": "20:00"
+                "scheduledTime": "14:05"
             },
             "geometry": {
                 "coordinates": [
