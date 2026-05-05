@@ -5,7 +5,7 @@
             "type": "Feature",
             "properties": {
                 "name": "BIG",
-                "scheduledTime": "14:15"
+                "scheduledTime": "20:10"
             },
             "geometry": {
                 "coordinates": [
@@ -20,7 +20,7 @@
             "type": "Feature",
             "properties": {
                 "name": "Șincai",
-                "scheduledTime": "14:11"
+                "scheduledTime": "20:06"
             },
             "geometry": {
                 "coordinates": [
@@ -35,7 +35,7 @@
             "type": "Feature",
             "properties": {
                 "name": "Dornei Pasaj VI",
-                "scheduledTime": 14:09
+                "scheduledTime": 20.04
             },
             "geometry": {
                 "coordinates": [
@@ -50,7 +50,7 @@
             "type": "Feature",
             "properties": {
                 "name": "Domus",
-                "scheduledTime": "14:07"
+                "scheduledTime": "20:02"
             },
             "geometry": {
                 "coordinates": [
@@ -65,7 +65,7 @@
             "type": "Feature",
             "properties": {
                 "name": "Generală 6",
-                "scheduledTime": "14:05"
+                "scheduledTime": "20:00"
             },
             "geometry": {
                 "coordinates": [
@@ -115,102 +115,34 @@
                     ],
                     [
                         24.500041001274525,
-{
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "OMV",
-        "scheduledTime": "14:00"
-      },
-      "geometry": {
-        "coordinates": [
-          24.507550732390087,
-          47.14141977845375
-        ],
-        "type": "Point"
-      },
-      "id": 0
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Școala Generală 6",
-        "scheduledTime": "14:03"
-      },
-      "geometry": {
-        "coordinates": [
-          24.505175152607336,
-          47.137211578531264
-        ],
-        "type": "Point"
-      },
-      "id": 1
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Domus",
-        "scheduledTime": "14:06"
-      },
-      "geometry": {
-        "coordinates": [
-          24.500603484640408,
-          47.134483560255376
-        ],
-        "type": "Point"
-      },
-      "id": 2
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Dornei Pasaj VI",
-        "scheduledTime": "14:09"
-      },
-      "geometry": {
-        "coordinates": [
-          24.4979466783212,
-          47.134124403076356
-        ],
-        "type": "Point"
-      },
-      "id": 3
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Șincai",
-        "scheduledTime": "14:11"
-      },
-      "geometry": {
-        "coordinates": [
-          24.49201131127853,
-          47.130750408142745
-        ],
-        "type": "Point"
-      },
-      "id": 4
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "BIG",
-        "scheduledTime": "14:15"
-      },
-      "geometry": {
-        "coordinates": [
-          24.484956220605426,
-          47.12653155724888
-        ],
-        "type": "Point"
-      },
-      "id": 5
-    }
-  ]
-}
-07272241752,
+                        47.13438056820087
+                    ],
+                    [
+                        24.500045373335723,
+                        47.134832649287716
+                    ],
+                    [
+                        24.49942891283871,
+                        47.13516575920801
+                    ],
+                    [
+                        24.497850599084273,
+                        47.13401771086441
+                    ],
+                    [
+                        24.495132057620765,
+                        47.132212279404825
+                    ],
+                    [
+                        24.491884303246877,
+                        47.130673771509834
+                    ],
+                    [
+                        24.49129131078044,
+                        47.13032795609652
+                    ],
+                    [
+                        24.491207272241752,
                         47.13042801083981
                     ],
                     [
