@@ -21,35 +21,161 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const busRef = ref(db, 'bus');
-
         onDisconnect(busRef).set({ active: false });
 
+        // -------------------------------------------------------
+        // ROUTE CONFIG
+        // Each route has a name, and an array of departures.
+        // Each departure has: file, label, departure time, and
+        // optionally a nextFile/nextDeparture for auto-switching.
+        // -------------------------------------------------------
+        const ROUTES = [
+            {
+                id: '1',
+                name: 'Linia 1',
+                departures: [
+                    { file: '1T.geojson',  label: 'BIG → Leoni',       time: '07:00', nextFile: '1R.geojson',  nextLabel: 'Leoni → BIG',       nextTime: '07:20' },
+                    { file: '1R.geojson',  label: 'Leoni → BIG',       time: '07:20', nextFile: '1T.geojson',  nextLabel: 'BIG → Leoni',       nextTime: '07:40' },
+                    { file: '1T.geojson',  label: 'BIG → Leoni',       time: '15:10', nextFile: '1R.geojson',  nextLabel: 'Leoni → BIG',       nextTime: '15:40' },
+                    { file: '1R.geojson',  label: 'Leoni → BIG',       time: '15:40', nextFile: null,          nextLabel: null,                nextTime: null },
+                ]
+            },
+            {
+                id: '1B',
+                name: 'Linia 1B',
+                departures: [
+                    { file: '1BT.geojson', label: 'BIG → Cuza Voda',   time: '18:45', nextFile: '1BR.geojson', nextLabel: 'Cuza Voda → BIG',   nextTime: '19:20' },
+                    { file: '1BR.geojson', label: 'Cuza Voda → BIG',   time: '19:20', nextFile: null,          nextLabel: null,                nextTime: null },
+                ]
+            },
+            {
+                id: '1C',
+                name: 'Linia 1C',
+                departures: [
+                    { file: '1T.geojson',  label: 'BIG → Leoni',       time: '15:10', nextFile: '1CR.geojson', nextLabel: 'Leoni → BIG',       nextTime: '15:40' },
+                    { file: '1CR.geojson', label: 'Leoni → BIG',       time: '15:40', nextFile: null,          nextLabel: null,                nextTime: null },
+                ]
+            },
+            {
+                id: '3',
+                name: 'Linia 3',
+                departures: [
+                    { file: '3T.geojson',  label: 'BIG → Generala 6',  time: '18:45', nextFile: '3R.geojson',  nextLabel: 'Generala 6 → BIG',  nextTime: '19:15' },
+                    { file: '3R.geojson',  label: 'Generala 6 → BIG',  time: '19:15', nextFile: null,          nextLabel: null,                nextTime: null },
+                ]
+            },
+            {
+                id: '8',
+                name: 'Linia 8',
+                departures: [
+                    { file: '8T.geojson',  label: 'BIG → Simpozionului', time: '14:30', nextFile: '8R.geojson',  nextLabel: 'Simpozionului → BIG', nextTime: '14:50' },
+                    { file: '8R.geojson',  label: 'Simpozionului → BIG', time: '14:50', nextFile: '8T.geojson',  nextLabel: 'BIG → Simpozionului', nextTime: '15:10' },
+                    { file: '8T.geojson',  label: 'BIG → Simpozionului', time: '15:10', nextFile: '8R.geojson',  nextLabel: 'Simpozionului → BIG', nextTime: '15:30' },
+                    { file: '8R.geojson',  label: 'Simpozionului → BIG', time: '15:30', nextFile: '8T.geojson',  nextLabel: 'BIG → Simpozionului', nextTime: '16:00' },
+                    { file: '8T.geojson',  label: 'BIG → Simpozionului', time: '16:00', nextFile: '8R.geojson',  nextLabel: 'Simpozionului → BIG', nextTime: '16:20' },
+                    { file: '8R.geojson',  label: 'Simpozionului → BIG', time: '16:20', nextFile: null,          nextLabel: null,                  nextTime: null },
+                ]
+            },
+            {
+                id: 'GARAJ',
+                name: 'GARAJ',
+                departures: [
+                    { file: 'test.geojson', label: 'Test', time: '00:00', nextFile: null, nextLabel: null, nextTime: null },
+                ]
+            },
+        ];
+
+        // -------------------------------------------------------
+        // STATE
+        // -------------------------------------------------------
         let watchId = null;
         let timerInterval = null;
         let routeStops = [];
         let currentStopIndex = 0;
         let currentRouteName = '';
+        let departureTime = '00:00';
+        let nextRouteFile = null;
+        let nextRouteName = null;
+        let nextDepartureTime = null;
         let wakeLock = null;
 
+        // -------------------------------------------------------
+        // HEADER CLOCK
+        // -------------------------------------------------------
         function updateHeader() {
             const now = new Date();
-            const months = ['ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'];
+            const months = ['ian.','feb.','mar.','apr.','mai','iun.','iul.','aug.','sep.','oct.','nov.','dec.'];
             const day = now.getDate();
             const month = months[now.getMonth()];
-            const hours = now.getHours().toString().padStart(2, '0');
-            const mins = now.getMinutes().toString().padStart(2, '0');
-            document.getElementById('headerDate').textContent = `${day} ${month}, ${hours}:${mins}`;
+            const hours = now.getHours().toString().padStart(2,'0');
+            const mins = now.getMinutes().toString().padStart(2,'0');
+            const el = document.getElementById('headerDate');
+            if (el) el.textContent = `${day} ${month}, ${hours}:${mins}`;
         }
-
         updateHeader();
         setInterval(updateHeader, 1000);
 
-        window.selectRoute = function (geojsonFile, routeName) {
-            currentRouteName = routeName;
-            document.getElementById('routeScreen').style.display = 'none';
+        // -------------------------------------------------------
+        // SCREEN 1: route list
+        // -------------------------------------------------------
+        window.showRouteList = function() {
+            const list = document.getElementById('routeList');
+            list.innerHTML = '';
+            ROUTES.forEach(route => {
+                const btn = document.createElement('button');
+                btn.textContent = route.name;
+                btn.onclick = () => showDepartures(route.id);
+                list.appendChild(btn);
+            });
+            document.getElementById('screen1').style.display = 'flex';
+            document.getElementById('screen2').style.display = 'none';
+            document.getElementById('driverScreen').style.display = 'none';
+        }
+
+        // -------------------------------------------------------
+        // SCREEN 2: departures for selected route
+        // -------------------------------------------------------
+        window.showDepartures = function(routeId) {
+            const route = ROUTES.find(r => r.id === routeId);
+            if (!route) return;
+
+            const list = document.getElementById('departureList');
+            list.innerHTML = '';
+
+            document.getElementById('screen2Title').textContent = route.name;
+
+            // Sort departures by time
+            const sorted = [...route.departures].sort((a, b) => {
+                const [ah, am] = a.time.split(':').map(Number);
+                const [bh, bm] = b.time.split(':').map(Number);
+                return (ah * 60 + am) - (bh * 60 + bm);
+            });
+
+            sorted.forEach(dep => {
+                const btn = document.createElement('button');
+                btn.innerHTML = `<span class="depTime">${dep.time}</span><span class="depLabel">${dep.label}</span>`;
+                btn.onclick = () => selectRoute(dep);
+                list.appendChild(btn);
+            });
+
+            document.getElementById('screen1').style.display = 'none';
+            document.getElementById('screen2').style.display = 'flex';
+        }
+
+        // -------------------------------------------------------
+        // SELECT ROUTE & START
+        // -------------------------------------------------------
+        window.selectRoute = function(dep) {
+            currentRouteName = `${dep.label} ${dep.time}`;
+            departureTime = dep.time;
+            nextRouteFile = dep.nextFile;
+            nextRouteName = dep.nextLabel ? `${dep.nextLabel} ${dep.nextTime}` : null;
+            nextDepartureTime = dep.nextTime;
+
+            document.getElementById('screen2').style.display = 'none';
             document.getElementById('driverScreen').style.display = 'flex';
 
-            fetch(geojsonFile)
+            fetch(dep.file)
                 .then(res => res.json())
                 .then(data => {
                     routeStops = data.features
@@ -61,6 +187,22 @@
                 });
         }
 
+        // -------------------------------------------------------
+        // SCHEDULED TIME via travelMinutes
+        // -------------------------------------------------------
+        function getStopScheduledTime(stop) {
+            const [h, m] = departureTime.split(':').map(Number);
+            const base = h * 60 + m;
+            const travel = stop.properties.travelMinutes || 0;
+            const total = base + travel;
+            const sh = Math.floor(total / 60) % 24;
+            const sm = total % 60;
+            return `${sh.toString().padStart(2,'0')}:${sm.toString().padStart(2,'0')}`;
+        }
+
+        // -------------------------------------------------------
+        // RENDER STOPS
+        // -------------------------------------------------------
         function renderStops() {
             const list = document.getElementById('stopList');
             list.innerHTML = '';
@@ -68,7 +210,7 @@
             const visible = routeStops.slice(currentStopIndex, currentStopIndex + 4);
 
             visible.forEach((stop, i) => {
-                const scheduledTime = stop.properties.scheduledTime;
+                const scheduledTime = getStopScheduledTime(stop);
                 const stopName = stop.properties.name;
 
                 const row = document.createElement('div');
@@ -81,15 +223,18 @@
                 list.appendChild(row);
             });
 
-            const routeNum = currentRouteName.replace('Linia ', '').split(' ')[0];
+            const routeNum = currentRouteName.split(' ')[0];
             document.getElementById('routeNumber').textContent = routeNum;
 
             if (currentStopIndex < routeStops.length) {
-                const status = getTimeStatus(routeStops[currentStopIndex].properties.scheduledTime);
+                const status = getTimeStatus(getStopScheduledTime(routeStops[currentStopIndex]));
                 document.getElementById('latenessDisplay').textContent = status.text;
             }
         }
 
+        // -------------------------------------------------------
+        // TIME STATUS
+        // -------------------------------------------------------
         function getTimeStatus(scheduledTime) {
             const now = new Date();
             const [h, m] = scheduledTime.split(':').map(Number);
@@ -97,24 +242,26 @@
             scheduled.setHours(h, m, 0, 0);
             const diffMins = Math.round((now - scheduled) / 60000);
 
-            if (diffMins === 0) return { text: '0' };
+            if (diffMins === 0) return { text: 'La timp' };
             if (diffMins > 0) return { text: `+${diffMins}'` };
             return { text: `${diffMins}'` };
         }
 
+        // -------------------------------------------------------
+        // WAKE LOCK
+        // -------------------------------------------------------
         async function requestWakeLock() {
             if ('wakeLock' in navigator) {
-                try {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                } catch (err) {
-                    console.log('Wake lock failed:', err);
-                }
+                try { wakeLock = await navigator.wakeLock.request('screen'); }
+                catch (err) { console.log('Wake lock failed:', err); }
             }
         }
 
+        // -------------------------------------------------------
+        // GPS TRACKING
+        // -------------------------------------------------------
         function startTracking() {
             if (!navigator.geolocation) return;
-
             requestWakeLock();
 
             watchId = navigator.geolocation.watchPosition(
@@ -126,58 +273,54 @@
                 },
                 (error) => {
                     console.error(error.message);
-                    // If watch dies, clear and retry after 3 seconds
                     navigator.geolocation.clearWatch(watchId);
                     watchId = null;
-                    setTimeout(() => {
-                        if (routeStops.length > 0) startTracking();
-                    }, 3000);
+                    setTimeout(() => { if (routeStops.length > 0) startTracking(); }, 3000);
                 },
                 { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
             );
 
             timerInterval = setInterval(() => renderStops(), 5000);
 
-            // Restart watch if page comes back into focus
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
                     requestWakeLock();
-                    if (watchId === null && routeStops.length > 0) {
-                        startTracking();
-                    }
+                    if (watchId === null && routeStops.length > 0) startTracking();
                 }
             });
         }
 
+        // -------------------------------------------------------
+        // FIREBASE PUSH
+        // -------------------------------------------------------
         function pushToFirebase(lat, lng) {
             if (currentStopIndex >= routeStops.length) return;
             const nextStop = routeStops[currentStopIndex];
-            const status = getTimeStatus(nextStop.properties.scheduledTime);
+            const scheduledTime = getStopScheduledTime(nextStop);
+            const status = getTimeStatus(scheduledTime);
 
             set(busRef, {
                 active: true,
                 lat, lng,
                 route: currentRouteName,
                 nextStop: nextStop.properties.name,
-                scheduledTime: nextStop.properties.scheduledTime,
+                scheduledTime,
                 status: status.text
             });
         }
 
+        // -------------------------------------------------------
+        // STOP DETECTION
+        // -------------------------------------------------------
         function checkStop(latlng) {
             if (currentStopIndex >= routeStops.length) return;
 
-            // Check all remaining stops, not just the next one
             for (let i = currentStopIndex; i < routeStops.length; i++) {
                 const stop = routeStops[i];
                 const stopLatLng = [stop.geometry.coordinates[1], stop.geometry.coordinates[0]];
-                const distance = getDistance(latlng, stopLatLng);
-
-                if (distance <= 30) {
+                if (getDistance(latlng, stopLatLng) <= 30) {
                     currentStopIndex = i + 1;
-                    if (currentStopIndex >= routeStops.length) {
-                        endRoute();
-                    }
+                    if (currentStopIndex >= routeStops.length) endRoute(true);
                     return;
                 }
             }
@@ -187,72 +330,98 @@
             const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        window.endRoute = function () {
-            if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+        // -------------------------------------------------------
+        // END ROUTE
+        // -------------------------------------------------------
+        window.endRoute = function(auto = false) {
             if (timerInterval !== null) { clearInterval(timerInterval); timerInterval = null; }
+
+            if (auto && nextRouteFile) {
+                const file = nextRouteFile;
+                const name = nextRouteName;
+                const time = nextDepartureTime;
+                nextRouteFile = null; nextRouteName = null; nextDepartureTime = null;
+                if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+
+                currentRouteName = name;
+                departureTime = time;
+
+                fetch(file)
+                    .then(res => res.json())
+                    .then(data => {
+                        routeStops = data.features
+                            .filter(f => f.geometry.type === 'Point')
+                            .sort((a, b) => a.id - b.id);
+                        currentStopIndex = 0;
+                        renderStops();
+                        startTracking();
+                    });
+                return;
+            }
+
+            // No next route — idle state
+            if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
             set(busRef, { active: false });
             routeStops = [];
             currentStopIndex = 0;
-            document.getElementById('driverScreen').style.display = 'none';
-            document.getElementById('routeScreen').style.display = 'flex';
+            document.getElementById('routeNumber').textContent = '';
+            document.getElementById('latenessDisplay').textContent = '';
+            document.getElementById('stopList').innerHTML = '';
         }
 
-        window.toggleFullscreen = function () {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
+        window.toggleFullscreen = function() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
         }
 
         window.addEventListener("beforeunload", () => set(busRef, { active: false }));
+
+        // Show route list on load
+        window.addEventListener('DOMContentLoaded', () => showRouteList());
     </script>
 </head>
 
 <body>
 
-    <!-- ROUTE SELECTION -->
-    <div id="routeScreen" class="driverRouteScreen">
-        <h1>Selecteaza Linia</h1>
-        <button onclick="selectRoute('1T.geojson', 'Linia 1 T')">1 TUR</button>
-        <button onclick="selectRoute('1R.geojson', 'Linia 1 R')">1 RETUR</button>
-        <button onclick="selectRoute('1BT.geojson', 'Linia 1B T')">1B TUR</button>
-        <button onclick="selectRoute('1BR.geojson', 'Linia 1B R')">1B RETUR</button>
-        <button onclick="selectRoute('1T.geojson', 'Linia 1C T')">1C TUR</button>
-        <button onclick="selectRoute('1CR.geojson', 'Linia 1C R')">1C RETUR</button>
-        <button onclick="selectRoute('3T.geojson', 'Linia 3 T')">3 TUR</button>
-        <button onclick="selectRoute('3R.geojson', 'Linia 3 R')">3 RETUR</button>
-        <button onclick="selectRoute('3BR.geojson', 'Linia 3B R')">3B RETUR</button>
-        <button onclick="selectRoute('8T.geojson', 'Linia 8 T')">8 TUR</button>
-        <button onclick="selectRoute('8R.geojson', 'Linia 8 R')">8 RETUR</button>
-        <button onclick="selectRoute('82T.geojson', 'Linia 8 T')">8 TUR CURSA 2</button>
-        <button onclick="selectRoute('82R.geojson', 'Linia 8 R')">8 RETUR CURSA 2</button>
-        <button onclick="selectRoute('sigmir.geojson', 'test')">test</button>
-    </div>
-
-    <!-- DRIVER SCREEN -->
-    <div id="driverScreen" class="driverDisplay">
+    <!-- SCREEN 1: Route list -->
+    <div id="screen1" class="driverRouteScreen">
         <div class="driverHeader">
             <div class="headerDate" id="headerDate">--</div>
             <div class="headerStatus">✓ 3G &nbsp; ✓ GPS 1/1</div>
         </div>
+        <div id="routeList" class="selectionList"></div>
+    </div>
+
+    <!-- SCREEN 2: Departures -->
+    <div id="screen2" class="driverRouteScreen" style="display:none;">
+        <div class="driverHeader">
+            <button class="backBtn" onclick="showRouteList()">&#8592;</button>
+            <div class="headerDate" id="screen2Title">--</div>
+            <div class="headerStatus">✓ 3G &nbsp; ✓ GPS 1/1</div>
+        </div>
+        <div id="departureList" class="selectionList"></div>
+    </div>
+
+    <!-- DRIVER SCREEN -->
+    <div id="driverScreen" class="driverDisplay" style="display:none;">
+        <div class="driverHeader">
+            <div class="headerDate" id="headerDate2">--</div>
+            <div class="headerStatus">✓ 3G &nbsp; ✓ GPS 1/1</div>
+        </div>
 
         <div class="driverTop">
-
             <div class="leftPanel">
                 <div class="routeBox">
-                    <div id="routeNumber">1</div>
+                    <div id="routeNumber">-</div>
                 </div>
-                <div id="latenessDisplay" class="latenessDisplay">0</div>
+                <div id="latenessDisplay" class="latenessDisplay"></div>
             </div>
-
             <div id="stopList" class="stopList"></div>
-
         </div>
 
         <div class="driverBottom">
@@ -260,9 +429,7 @@
             <button class="fullscreenBtn" onclick="toggleFullscreen()">&#x26F6;</button>
             <div class="plateBox">BN 29 TCB</div>
         </div>
-
     </div>
 
 </body>
-
 </html>
