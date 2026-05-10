@@ -79,7 +79,6 @@ html, body {
     font-size: 1.2rem;
     font-weight: bold;
     padding: 0 20px 15px 20px;
-    border-bottom: 1px solid #333;
     margin-bottom: 10px;
 }
 
@@ -192,7 +191,6 @@ html, body {
     align-items: center;
     padding: 10px 16px;
     position: relative;
-    border-bottom: 1px solid #ccc;
     margin-bottom: 8px;
     flex-shrink: 0;
 }
@@ -241,13 +239,13 @@ html, body {
 .routeBox {
     background: black;
     color: white;
-    width: 260px;
+    width: 400px;
+    height: 300px;
     min-width: 260px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 10px;
-    flex: 1;
 }
 
 #routeNumber {
@@ -257,7 +255,7 @@ html, body {
 }
 
 .latenessDisplay {
-    font-size: 4rem;
+    font-size: 6rem;
     font-weight: bold;
     color: black;
     text-align: center;
@@ -298,7 +296,6 @@ html, body {
     justify-content: space-between;
     align-items: center;
     padding-top: 10px;
-    border-top: 2px solid black;
     gap: 10px;
 }
 
