@@ -2,52 +2,30 @@
   font-family: DejaVuSans; 
   src: url(DejaVuSans-Bold.ttf);
 }
- 
+
 * {
     font-family: DejaVuSans !important;
     margin: 0;
     padding: 0;
+    border-radius: 0 !important;
 }
- 
+
 html, body {
     height: 100%;
 }
- 
+
 /* ---- PASSENGER MAP ---- */
- 
-#routeScreen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    gap: 20px;
-}
- 
-#routeScreen h1 {
-    font-size: 2rem;
-}
- 
-#routeScreen button {
-    padding: 5px 20px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    border: none;
-    background: #007bff;
-    color: white;
-    border-radius: 8px;
-}
- 
+
 #mapScreen {
     height: 100vh;
     width: 100%;
 }
- 
+
 #map {
     height: 100%;
     width: 100%;
 }
- 
+
 #infoPanel {
     position: fixed;
     bottom: 30px;
@@ -56,14 +34,13 @@ html, body {
     background: rgba(0, 0, 0, 0.75);
     color: white;
     padding: 10px 20px;
-    border-radius: 10px;
     z-index: 9999;
     font-size: 1rem;
     text-align: center;
     pointer-events: none;
     white-space: nowrap;
 }
- 
+
 #menuBtn {
     position: fixed;
     top: 10px;
@@ -71,13 +48,12 @@ html, body {
     z-index: 2000;
     background: white;
     border: none;
-    border-radius: 6px;
     padding: 8px 12px;
     font-size: 1.4rem;
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
- 
+
 #sideMenu {
     position: fixed;
     top: 0;
@@ -94,11 +70,11 @@ html, body {
     overflow-y: auto;
     transition: left 0.3s ease;
 }
- 
+
 #sideMenu.open {
     left: 0;
 }
- 
+
 #sideMenu .menuHeader {
     font-size: 1.2rem;
     font-weight: bold;
@@ -106,7 +82,7 @@ html, body {
     border-bottom: 1px solid #333;
     margin-bottom: 10px;
 }
- 
+
 #sideMenu button {
     background: transparent;
     color: white;
@@ -118,11 +94,11 @@ html, body {
     cursor: pointer;
     width: 100%;
 }
- 
+
 #sideMenu button:active {
     background: #333;
 }
- 
+
 #menuOverlay {
     display: none;
     position: fixed;
@@ -133,13 +109,13 @@ html, body {
     background: rgba(0,0,0,0.4);
     z-index: 2500;
 }
- 
+
 #menuOverlay.open {
     display: block;
 }
- 
+
 /* ---- DRIVER SELECTION SCREENS ---- */
- 
+
 .driverRouteScreen {
     display: flex;
     flex-direction: column;
@@ -149,13 +125,13 @@ html, body {
     box-sizing: border-box;
     overflow-y: auto;
 }
- 
+
 .selectionList {
     display: flex;
     flex-direction: column;
     flex: 1;
 }
- 
+
 .selectionList button {
     background: transparent;
     color: white;
@@ -170,22 +146,22 @@ html, body {
     align-items: center;
     gap: 16px;
 }
- 
+
 .selectionList button:active {
     background: #333;
 }
- 
+
 .depTime {
     font-weight: bold;
     min-width: 55px;
     font-size: 1.3rem;
 }
- 
+
 .depLabel {
     font-size: 1.1rem;
     color: #ccc;
 }
- 
+
 .backBtn {
     background: transparent !important;
     border: none !important;
@@ -196,9 +172,9 @@ html, body {
     min-width: unset !important;
     width: auto !important;
 }
- 
+
 /* ---- DRIVER ACTIVE SCREEN ---- */
- 
+
 .driverDisplay {
     display: none;
     flex-direction: column;
@@ -209,39 +185,44 @@ html, body {
     padding: 10px;
     box-sizing: border-box;
 }
- 
+
 .driverHeader {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 10px 16px;
     position: relative;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #ccc;
     margin-bottom: 8px;
     flex-shrink: 0;
 }
- 
-.driverDisplay .driverHeader {
-    border-bottom: 1px solid #ccc;
+
+.driverRouteScreen .driverHeader {
+    border-bottom: 1px solid #333;
 }
- 
+
 .headerDate {
     font-size: 1.2rem;
     font-weight: bold;
     text-align: center;
+    color: white;
 }
- 
+
+.driverDisplay .headerDate {
+    color: black;
+}
+
 .headerStatus {
     position: absolute;
     right: 16px;
     font-size: 1rem;
     color: #aaa;
 }
- 
+
 .driverDisplay .headerStatus {
     color: #333;
 }
- 
+
 .driverTop {
     display: flex;
     flex-direction: row;
@@ -249,14 +230,14 @@ html, body {
     flex: 1;
     overflow: hidden;
 }
- 
+
 .leftPanel {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
 }
- 
+
 .routeBox {
     background: black;
     color: white;
@@ -265,25 +246,24 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
     padding: 10px;
     flex: 1;
 }
- 
+
 #routeNumber {
     font-size: 7rem;
     font-weight: bold;
     line-height: 1;
 }
- 
+
 .latenessDisplay {
-    font-size: 2.2rem;
+    font-size: 4rem;
     font-weight: bold;
     color: black;
     text-align: center;
     padding: 6px 0;
 }
- 
+
 .stopList {
     display: flex;
     flex-direction: column;
@@ -291,7 +271,7 @@ html, body {
     justify-content: flex-start;
     flex: 1;
 }
- 
+
 .stopRow {
     display: flex;
     align-items: center;
@@ -301,19 +281,18 @@ html, body {
     background: transparent;
     white-space: nowrap;
 }
- 
+
 .stopRow.nextStop {
     background: black;
     color: white;
     font-size: 1.6rem;
     font-weight: bold;
-    border-radius: 6px;
 }
- 
+
 .stopIndex { min-width: 28px; }
 .stopName { flex: 1; }
 .stopTime { font-weight: bold; min-width: 55px; text-align: right; }
- 
+
 .driverBottom {
     display: flex;
     justify-content: space-between;
@@ -322,32 +301,29 @@ html, body {
     border-top: 2px solid black;
     gap: 10px;
 }
- 
+
 .endRouteBtn {
     padding: 10px 20px;
     font-size: 1rem;
     background: #cc0000;
     color: white;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
 }
- 
+
 .fullscreenBtn {
     padding: 10px 16px;
     font-size: 1.2rem;
     background: #333;
     color: white;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
 }
- 
+
 .plateBox {
     background: black;
     color: white;
     padding: 10px 20px;
     font-size: 1.2rem;
     font-weight: bold;
-    border-radius: 8px;
 }
