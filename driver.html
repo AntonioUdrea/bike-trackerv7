@@ -1,13 +1,13 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html>
- 
+
 <head>
     <title>Driver</title>
     <link rel="stylesheet" href="style.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getDatabase, ref, set, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
- 
+
         const firebaseConfig = {
             apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
             authDomain: "bike-trackerv7.firebaseapp.com",
@@ -17,68 +17,77 @@
             messagingSenderId: "829142915200",
             appId: "1:829142915200:web:cd37f3234ecb850421ae65"
         };
- 
+
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const busRef = ref(db, 'bus');
         onDisconnect(busRef).set({ active: false });
- 
+
         const ROUTES = [
             {
                 id: '1',
                 name: 'Linia 1',
                 departures: [
-                    { file: '1T.geojson',  label: 'BIG → Leoni',         time: '07:00', nextFile: '1R.geojson',  nextLabel: 'Leoni → BIG',         nextTime: '07:20' },
-                    { file: '1R.geojson',  label: 'Leoni → BIG',         time: '07:20', nextFile: '1T.geojson',  nextLabel: 'BIG → Leoni',         nextTime: '07:40' },
-                    { file: '1T.geojson',  label: 'BIG → Leoni',         time: '15:10', nextFile: '1R.geojson',  nextLabel: 'Leoni → BIG',         nextTime: '15:40' },
-                    { file: '1R.geojson',  label: 'Leoni → BIG',         time: '15:40', nextFile: null,          nextLabel: null,                  nextTime: null },
+                    { file: '1T.geojson', label: 'BIG - LEONI', time: '15:10', nextFile: '1R.geojson', nextLabel: 'Leoni → BIG', nextTime: '15:40' },
+                    { file: '1R.geojson', label: 'LEONI - BIG', time: '15:40', nextFile: null, nextLabel: null, nextTime: null },
                 ]
             },
             {
                 id: '1B',
                 name: 'Linia 1B',
                 departures: [
-                    { file: '1BT.geojson', label: 'BIG → Cuza Voda',     time: '18:45', nextFile: '1BR.geojson', nextLabel: 'Cuza Voda → BIG',     nextTime: '19:20' },
-                    { file: '1BR.geojson', label: 'Cuza Voda → BIG',     time: '19:20', nextFile: null,          nextLabel: null,                  nextTime: null },
+                    { file: '1BT.geojson', label: 'BIG - CUZA VODA', time: '16:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG', nextTime: '18:00' },
+                    { file: '1BR.geojson', label: 'CUZA VODA - BIG', time: '18:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '1BT.geojson', label: 'BIG - CUZA VODA', time: '17:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG', nextTime: '19:00' },
+                    { file: '1BR.geojson', label: 'CUZA VODA - BIG', time: '19:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '1BT.geojson', label: 'BIG - CUZA VODA', time: '18:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG', nextTime: '20:00' },
+                    { file: '1BR.geojson', label: 'CUZA VODA - BIG', time: '20:00', nextFile: null, nextLabel: null, nextTime: null },
                 ]
             },
             {
                 id: '1C',
                 name: 'Linia 1C',
                 departures: [
-                    { file: '1T.geojson',  label: 'BIG → Leoni',         time: '15:10', nextFile: '1CR.geojson', nextLabel: 'Leoni → BIG',         nextTime: '15:40' },
-                    { file: '1CR.geojson', label: 'Leoni → BIG',         time: '15:40', nextFile: null,          nextLabel: null,                  nextTime: null },
+                    { file: '1T.geojson', label: 'BIG - LEONI', time: '15:10', nextFile: '1CR.geojson', nextLabel: 'LEONI - BIG', nextTime: '15:40' },
+                    { file: '1CR.geojson', label: 'LEONI - BIG', time: '15:40', nextFile: null, nextLabel: null, nextTime: null },
                 ]
             },
             {
                 id: '3',
                 name: 'Linia 3',
                 departures: [
-                    { file: '3T.geojson',  label: 'BIG → Generala 6',    time: '18:45', nextFile: '3R.geojson',  nextLabel: 'Generala 6 → BIG',    nextTime: '19:15' },
-                    { file: '3R.geojson',  label: 'Generala 6 → BIG',    time: '19:15', nextFile: null,          nextLabel: null,                  nextTime: null },
+                    { file: '3T.geojson', label: 'BIG - INFOEL', time: '07:30', nextFile: '3R.geojson', nextLabel: 'INFOEL - BIG', nextTime: '14:00' },
+                    { file: '3R.geojson', label: 'INFOEL - BIG', time: '14:00', nextFile: null, nextLabel: null, nextTime: null },
                 ]
             },
             {
                 id: '8',
                 name: 'Linia 8',
                 departures: [
-                    { file: '8T.geojson',  label: 'BIG → Simpozionului', time: '14:30', nextFile: '8R.geojson',  nextLabel: 'Simpozionului → BIG', nextTime: '14:50' },
-                    { file: '8R.geojson',  label: 'Simpozionului → BIG', time: '14:50', nextFile: '8T.geojson',  nextLabel: 'BIG → Simpozionului', nextTime: '15:10' },
-                    { file: '8T.geojson',  label: 'BIG → Simpozionului', time: '15:10', nextFile: '8R.geojson',  nextLabel: 'Simpozionului → BIG', nextTime: '15:30' },
-                    { file: '8R.geojson',  label: 'Simpozionului → BIG', time: '15:30', nextFile: '8T.geojson',  nextLabel: 'BIG → Simpozionului', nextTime: '16:00' },
-                    { file: '8T.geojson',  label: 'BIG → Simpozionului', time: '16:00', nextFile: '8R.geojson',  nextLabel: 'Simpozionului → BIG', nextTime: '16:20' },
-                    { file: '8R.geojson',  label: 'Simpozionului → BIG', time: '16:20', nextFile: null,          nextLabel: null,                  nextTime: null },
-                ]
-            },
-            {
-                id: 'GARAJ',
-                name: 'GARAJ',
-                departures: [
-                    { file: 'test.geojson', label: 'Test', time: '00:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '14:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '14:20' },
+                    { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '14:20', nextFile: null, nextLabel: null, nextTime: null },
+
+                    { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '15:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '15:20' },
+                    { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '15:20', nextFile: null, nextLabel: null, nextTime: null },
+
+                    { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '16:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '16:20' },
+                    { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '16:20', nextFile: null, nextLabel: null, nextTime: null },
+
+                    { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '17:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '17:20' },
+                    { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '17:20', nextFile: null, nextLabel: null, nextTime: null },
+
+                    { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '18:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '18:20' },
+                    { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '18:20', nextFile: null, nextLabel: null, nextTime: null },
+
+                    { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '19:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '19:20' },
+                    { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '19:20', nextFile: null, nextLabel: null, nextTime: null },
+
+                    { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '20:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '20:20' },
+                    { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '20:20', nextFile: null, nextLabel: null, nextTime: null },
                 ]
             },
         ];
- 
+
         // -------------------------------------------------------
         // STATE
         // -------------------------------------------------------
@@ -94,17 +103,17 @@
         let nextRouteId = null;
         let nextDepartureTime = null;
         let wakeLock = null;
- 
+
         // -------------------------------------------------------
         // HEADER CLOCK
         // -------------------------------------------------------
         function updateHeader() {
             const now = new Date();
-            const months = ['ian.','feb.','mar.','apr.','mai','iun.','iul.','aug.','sep.','oct.','nov.','dec.'];
+            const months = ['ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'];
             const day = now.getDate();
             const month = months[now.getMonth()];
-            const hours = now.getHours().toString().padStart(2,'0');
-            const mins = now.getMinutes().toString().padStart(2,'0');
+            const hours = now.getHours().toString().padStart(2, '0');
+            const mins = now.getMinutes().toString().padStart(2, '0');
             const text = `${day} ${month}, ${hours}:${mins}`;
             const el1 = document.getElementById('headerDate');
             const el2 = document.getElementById('headerDate2');
@@ -113,11 +122,11 @@
         }
         updateHeader();
         setInterval(updateHeader, 1000);
- 
+
         // -------------------------------------------------------
         // SCREEN 1: route list
         // -------------------------------------------------------
-        window.showRouteList = function() {
+        window.showRouteList = function () {
             const list = document.getElementById('routeList');
             list.innerHTML = '';
             ROUTES.forEach(route => {
@@ -130,39 +139,39 @@
             document.getElementById('screen2').style.display = 'none';
             document.getElementById('driverScreen').style.display = 'none';
         }
- 
+
         // -------------------------------------------------------
         // SCREEN 2: departures
         // -------------------------------------------------------
-        window.showDepartures = function(routeId) {
+        window.showDepartures = function (routeId) {
             const route = ROUTES.find(r => r.id === routeId);
             if (!route) return;
- 
+
             const list = document.getElementById('departureList');
             list.innerHTML = '';
             document.getElementById('screen2Title').textContent = route.name;
- 
+
             const sorted = [...route.departures].sort((a, b) => {
                 const [ah, am] = a.time.split(':').map(Number);
                 const [bh, bm] = b.time.split(':').map(Number);
                 return (ah * 60 + am) - (bh * 60 + bm);
             });
- 
+
             sorted.forEach(dep => {
                 const btn = document.createElement('button');
                 btn.innerHTML = `<span class="depTime">${dep.time}</span><span class="depLabel">${dep.label}</span>`;
                 btn.onclick = () => selectRoute(dep, routeId);
                 list.appendChild(btn);
             });
- 
+
             document.getElementById('screen1').style.display = 'none';
             document.getElementById('screen2').style.display = 'flex';
         }
- 
+
         // -------------------------------------------------------
         // SELECT ROUTE & START
         // -------------------------------------------------------
-        window.selectRoute = function(dep, routeId) {
+        window.selectRoute = function (dep, routeId) {
             currentRouteName = `${dep.label} ${dep.time}`;
             currentRouteId = routeId;
             departureTime = dep.time;
@@ -170,13 +179,13 @@
             nextRouteName = dep.nextLabel ? `${dep.nextLabel} ${dep.nextTime}` : null;
             nextRouteId = dep.nextFile ? ROUTES.find(r => r.departures.some(d => d.file === dep.nextFile))?.id || routeId : null;
             nextDepartureTime = dep.nextTime;
- 
+
             document.getElementById('screen2').style.display = 'none';
             document.getElementById('driverScreen').style.display = 'flex';
- 
+
             // Make sure left panel is visible
             document.querySelector('.leftPanel').style.display = 'flex';
- 
+
             fetch(dep.file)
                 .then(res => res.json())
                 .then(data => {
@@ -188,7 +197,7 @@
                     startTracking();
                 });
         }
- 
+
         // -------------------------------------------------------
         // SCHEDULED TIME via travelMinutes
         // -------------------------------------------------------
@@ -199,22 +208,22 @@
             const total = base + travel;
             const sh = Math.floor(total / 60) % 24;
             const sm = total % 60;
-            return `${sh.toString().padStart(2,'0')}:${sm.toString().padStart(2,'0')}`;
+            return `${sh.toString().padStart(2, '0')}:${sm.toString().padStart(2, '0')}`;
         }
- 
+
         // -------------------------------------------------------
         // RENDER STOPS
         // -------------------------------------------------------
         function renderStops() {
             const list = document.getElementById('stopList');
             list.innerHTML = '';
- 
+
             const visible = routeStops.slice(currentStopIndex, currentStopIndex + 4);
- 
+
             visible.forEach((stop, i) => {
                 const scheduledTime = getStopScheduledTime(stop);
                 const stopName = stop.properties.name;
- 
+
                 const row = document.createElement('div');
                 row.className = 'stopRow' + (i === 0 ? ' nextStop' : '');
                 row.innerHTML = `
@@ -224,16 +233,16 @@
                 `;
                 list.appendChild(row);
             });
- 
+
             // Use currentRouteId for the route number box
             document.getElementById('routeNumber').textContent = currentRouteId;
- 
+
             if (currentStopIndex < routeStops.length) {
                 const status = getTimeStatus(getStopScheduledTime(routeStops[currentStopIndex]));
                 document.getElementById('latenessDisplay').textContent = status.text;
             }
         }
- 
+
         // -------------------------------------------------------
         // TIME STATUS
         // -------------------------------------------------------
@@ -243,12 +252,12 @@
             const scheduled = new Date();
             scheduled.setHours(h, m, 0, 0);
             const diffMins = Math.round((now - scheduled) / 60000);
- 
+
             if (diffMins === 0) return { text: 'La timp' };
             if (diffMins > 0) return { text: `+${diffMins}'` };
             return { text: `${diffMins}'` };
         }
- 
+
         // -------------------------------------------------------
         // WAKE LOCK
         // -------------------------------------------------------
@@ -258,14 +267,14 @@
                 catch (err) { console.log('Wake lock failed:', err); }
             }
         }
- 
+
         // -------------------------------------------------------
         // GPS TRACKING
         // -------------------------------------------------------
         function startTracking() {
             if (!navigator.geolocation) return;
             requestWakeLock();
- 
+
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
@@ -281,9 +290,9 @@
                 },
                 { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
             );
- 
+
             timerInterval = setInterval(() => renderStops(), 5000);
- 
+
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
                     requestWakeLock();
@@ -291,7 +300,7 @@
                 }
             });
         }
- 
+
         // -------------------------------------------------------
         // FIREBASE PUSH
         // -------------------------------------------------------
@@ -300,7 +309,7 @@
             const nextStop = routeStops[currentStopIndex];
             const scheduledTime = getStopScheduledTime(nextStop);
             const status = getTimeStatus(scheduledTime);
- 
+
             set(busRef, {
                 active: true,
                 lat, lng,
@@ -310,13 +319,13 @@
                 status: status.text
             });
         }
- 
+
         // -------------------------------------------------------
         // STOP DETECTION
         // -------------------------------------------------------
         function checkStop(latlng) {
             if (currentStopIndex >= routeStops.length) return;
- 
+
             for (let i = currentStopIndex; i < routeStops.length; i++) {
                 const stop = routeStops[i];
                 const stopLatLng = [stop.geometry.coordinates[1], stop.geometry.coordinates[0]];
@@ -327,15 +336,15 @@
                 }
             }
         }
- 
+
         function getDistance([lat1, lng1], [lat2, lng2]) {
             const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
- 
+
         // -------------------------------------------------------
         // END ROUTE
         // -------------------------------------------------------
@@ -344,10 +353,10 @@
             if (timerInterval !== null) { clearInterval(timerInterval); timerInterval = null; }
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
         }
- 
-        window.endRoute = function(auto = false) {
+
+        window.endRoute = function (auto = false) {
             if (timerInterval !== null) { clearInterval(timerInterval); timerInterval = null; }
- 
+
             // Auto end with next route — switch seamlessly
             if (auto && nextRouteFile) {
                 const file = nextRouteFile;
@@ -356,11 +365,11 @@
                 const time = nextDepartureTime;
                 nextRouteFile = null; nextRouteName = null; nextRouteId = null; nextDepartureTime = null;
                 if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
- 
+
                 currentRouteName = name;
                 currentRouteId = id;
                 departureTime = time;
- 
+
                 fetch(file)
                     .then(res => res.json())
                     .then(data => {
@@ -374,7 +383,7 @@
                     });
                 return;
             }
- 
+
             // Auto end with no next route — idle state, hide left panel
             if (auto && !nextRouteFile) {
                 stopAllTracking();
@@ -385,7 +394,7 @@
                 document.getElementById('stopList').innerHTML = '';
                 return;
             }
- 
+
             // Manual end — always return to route list
             stopAllTracking();
             set(busRef, { active: false });
@@ -396,19 +405,19 @@
             document.getElementById('driverScreen').style.display = 'none';
             showRouteList();
         }
- 
-        window.toggleFullscreen = function() {
+
+        window.toggleFullscreen = function () {
             if (!document.fullscreenElement) document.documentElement.requestFullscreen();
             else document.exitFullscreen();
         }
- 
+
         window.addEventListener("beforeunload", () => set(busRef, { active: false }));
         window.addEventListener('DOMContentLoaded', () => showRouteList());
     </script>
 </head>
- 
+
 <body>
- 
+
     <!-- SCREEN 1: Route list -->
     <div id="screen1" class="driverRouteScreen">
         <div class="driverHeader">
@@ -417,7 +426,7 @@
         </div>
         <div id="routeList" class="selectionList"></div>
     </div>
- 
+
     <!-- SCREEN 2: Departures -->
     <div id="screen2" class="driverRouteScreen" style="display:none;">
         <div class="driverHeader">
@@ -427,14 +436,14 @@
         </div>
         <div id="departureList" class="selectionList"></div>
     </div>
- 
+
     <!-- DRIVER SCREEN -->
     <div id="driverScreen" class="driverDisplay" style="display:none;">
         <div class="driverHeader">
             <div class="headerDate" id="headerDate2">--</div>
             <div class="headerStatus">✓ 3G &nbsp; ✓ GPS 1/1</div>
         </div>
- 
+
         <div class="driverTop">
             <div class="leftPanel">
                 <div class="routeBox">
@@ -444,13 +453,14 @@
             </div>
             <div id="stopList" class="stopList"></div>
         </div>
- 
+
         <div class="driverBottom">
             <button class="endRouteBtn" onclick="endRoute()">&#9632;</button>
             <button class="fullscreenBtn" onclick="toggleFullscreen()">&#x26F6;</button>
             <div class="plateBox">BN 29 TCB</div>
         </div>
     </div>
- 
+
 </body>
+
 </html>
