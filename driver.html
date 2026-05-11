@@ -253,7 +253,7 @@
             scheduled.setHours(h, m, 0, 0);
             const diffMins = Math.round((now - scheduled) / 60000);
 
-            if (diffMins === 0) return { text: 'La timp' };
+            if (diffMins === 0) return { text: '0' };
             if (diffMins > 0) return { text: `+${diffMins}'` };
             return { text: `${diffMins}'` };
         }
