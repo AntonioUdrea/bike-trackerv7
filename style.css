@@ -1,18 +1,30 @@
 @font-face {
-  font-family: DejaVuSans; 
-  src: url(DejaVuSans-Bold.ttf);
+    font-family: DejaVuSans;
+    src: url(DejaVuSans-Bold.ttf);
 }
 
+/* GLOBAL RESET */
 * {
-    font-family: DejaVuSans !important;
     margin: 0;
     padding: 0;
-    border-radius: 0 !important;
+    box-sizing: border-box;
 }
 
-.leaflet-container, .leaflet-container * {
-    font-family: initial !important;
-    border-radius: initial !important;
+/* APP FONT + SHARP CORNERS */
+body {
+    font-family: DejaVuSans;
+}
+
+body * {
+    font-family: inherit;
+    border-radius: 0;
+}
+
+/* RESTORE LEAFLET DEFAULTS */
+.leaflet-container,
+.leaflet-container * {
+    font-family: sans-serif !important;
+    border-radius: revert !important;
 }
 
 html, body {
