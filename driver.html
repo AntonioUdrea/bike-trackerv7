@@ -107,6 +107,7 @@
         let totalDistance = 0;
         let tripStartTime = null;
         let tripDate = null;
+        let stopLog = [];
 
         // -------------------------------------------------------
         // HEADER CLOCK
@@ -189,6 +190,7 @@
             totalDistance = 0;
             tripStartTime = null;
             tripDate = new Date().toISOString().slice(0, 10);
+            stopLog = [];
 
             document.getElementById('screen2').style.display = 'none';
             document.getElementById('driverScreen').style.display = 'flex';
@@ -342,7 +344,7 @@
         // SAVE TRIP TO HISTORY
         // -------------------------------------------------------
         function saveTrip() {
-            if (tripTrack.length < 2) return; // nothing meaningful to save
+            if (tripTrack.length < 2) return;
             const endTime = new Date().toTimeString().slice(0, 8);
             const tripKey = `${tripDate}_${currentRouteId}_${departureTime.replace(':', '')}`;
             const tripsRef = ref(db, `trips/${tripKey}`);
@@ -354,7 +356,8 @@
                 startTime: tripStartTime,
                 endTime,
                 distanceKm: (totalDistance / 1000).toFixed(2),
-                track: tripTrack
+                track: tripTrack,
+                stops: stopLog
             });
         }
 
@@ -368,6 +371,19 @@
                 const stop = routeStops[i];
                 const stopLatLng = [stop.geometry.coordinates[1], stop.geometry.coordinates[0]];
                 if (getDistance(latlng, stopLatLng) <= 30) {
+                    // Log actual arrival time and lateness
+                    const actualTime = new Date().toTimeString().slice(0, 5);
+                    const scheduledTime = getStopScheduledTime(stop);
+                    const [sh, sm] = scheduledTime.split(':').map(Number);
+                    const [ah, am] = actualTime.split(':').map(Number);
+                    const diffMins = (ah * 60 + am) - (sh * 60 + sm);
+                    stopLog.push({
+                        name: stop.properties.name,
+                        scheduled: scheduledTime,
+                        actual: actualTime,
+                        diff: diffMins
+                    });
+
                     currentStopIndex = i + 1;
                     if (currentStopIndex >= routeStops.length) endRoute(true);
                     return;
@@ -412,6 +428,7 @@
                 totalDistance = 0;
                 tripStartTime = null;
                 tripDate = new Date().toISOString().slice(0, 10);
+                stopLog = [];
 
                 fetch(file)
                     .then(res => res.json())
@@ -446,6 +463,7 @@
             routeStops = [];
             currentStopIndex = 0;
             nextRouteFile = null; nextRouteName = null; nextRouteId = null; nextDepartureTime = null;
+            stopLog = [];
             document.querySelector('.leftPanel').style.display = 'flex';
             document.getElementById('driverScreen').style.display = 'none';
             showRouteList();
