@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="style.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, set, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getDatabase, ref, set, push, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
@@ -70,22 +70,16 @@
                 departures: [
                     { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '14:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '14:20' },
                     { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '14:20', nextFile: null, nextLabel: null, nextTime: null },
-
                     { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '15:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '15:20' },
                     { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '15:20', nextFile: null, nextLabel: null, nextTime: null },
-
                     { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '16:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '16:20' },
                     { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '16:20', nextFile: null, nextLabel: null, nextTime: null },
-
                     { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '17:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '17:20' },
                     { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '17:20', nextFile: null, nextLabel: null, nextTime: null },
-
                     { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '18:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '18:20' },
                     { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '18:20', nextFile: null, nextLabel: null, nextTime: null },
-
                     { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '19:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '19:20' },
                     { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '19:20', nextFile: null, nextLabel: null, nextTime: null },
-
                     { file: '8T.geojson', label: 'BIG - SIMPOZIONULUI', time: '20:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '20:20' },
                     { file: '8R.geojson', label: 'SIMPOZIONULUI - BIG', time: '20:20', nextFile: null, nextLabel: null, nextTime: null },
                 ]
@@ -99,14 +93,20 @@
         let timerInterval = null;
         let routeStops = [];
         let currentStopIndex = 0;
-        let currentRouteName = '';  // display name e.g. "BIG → Simpozionului 16:00"
-        let currentRouteId = '';    // route number e.g. "8"
+        let currentRouteName = '';
+        let currentRouteId = '';
         let departureTime = '00:00';
         let nextRouteFile = null;
         let nextRouteName = null;
         let nextRouteId = null;
         let nextDepartureTime = null;
         let wakeLock = null;
+
+        // Trip recording
+        let tripTrack = [];
+        let totalDistance = 0;
+        let tripStartTime = null;
+        let tripDate = null;
 
         // -------------------------------------------------------
         // HEADER CLOCK
@@ -184,10 +184,14 @@
             nextRouteId = dep.nextFile ? ROUTES.find(r => r.departures.some(d => d.file === dep.nextFile))?.id || routeId : null;
             nextDepartureTime = dep.nextTime;
 
+            // Reset trip recording
+            tripTrack = [];
+            totalDistance = 0;
+            tripStartTime = null;
+            tripDate = new Date().toISOString().slice(0, 10);
+
             document.getElementById('screen2').style.display = 'none';
             document.getElementById('driverScreen').style.display = 'flex';
-
-            // Make sure left panel is visible
             document.querySelector('.leftPanel').style.display = 'flex';
 
             fetch(dep.file)
@@ -238,7 +242,6 @@
                 list.appendChild(row);
             });
 
-            // Use currentRouteId for the route number box
             document.getElementById('routeNumber').textContent = currentRouteId;
 
             if (currentStopIndex < routeStops.length) {
@@ -282,6 +285,17 @@
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
+
+                    // Record track point
+                    const timeStr = new Date().toTimeString().slice(0, 8);
+                    if (!tripStartTime) tripStartTime = timeStr;
+
+                    if (tripTrack.length > 0) {
+                        const prev = tripTrack[tripTrack.length - 1];
+                        totalDistance += getDistance([prev.lat, prev.lng], [latitude, longitude]);
+                    }
+                    tripTrack.push({ lat: latitude, lng: longitude, t: timeStr });
+
                     checkStop([latitude, longitude]);
                     pushToFirebase(latitude, longitude);
                     renderStops();
@@ -306,7 +320,7 @@
         }
 
         // -------------------------------------------------------
-        // FIREBASE PUSH
+        // FIREBASE PUSH (live location)
         // -------------------------------------------------------
         function pushToFirebase(lat, lng) {
             if (currentStopIndex >= routeStops.length) return;
@@ -321,6 +335,26 @@
                 nextStop: nextStop.properties.name,
                 scheduledTime,
                 status: status.text
+            });
+        }
+
+        // -------------------------------------------------------
+        // SAVE TRIP TO HISTORY
+        // -------------------------------------------------------
+        function saveTrip() {
+            if (tripTrack.length < 2) return; // nothing meaningful to save
+            const endTime = new Date().toTimeString().slice(0, 8);
+            const tripKey = `${tripDate}_${currentRouteId}_${departureTime.replace(':', '')}`;
+            const tripsRef = ref(db, `trips/${tripKey}`);
+            set(tripsRef, {
+                routeName: currentRouteName,
+                routeId: currentRouteId,
+                date: tripDate,
+                departureTime,
+                startTime: tripStartTime,
+                endTime,
+                distanceKm: (totalDistance / 1000).toFixed(2),
+                track: tripTrack
             });
         }
 
@@ -361,8 +395,9 @@
         window.endRoute = function (auto = false) {
             if (timerInterval !== null) { clearInterval(timerInterval); timerInterval = null; }
 
-            // Auto end with next route — switch seamlessly
+            // Auto end with next route — save trip, then switch
             if (auto && nextRouteFile) {
+                saveTrip();
                 const file = nextRouteFile;
                 const name = nextRouteName;
                 const id = nextRouteId;
@@ -373,6 +408,10 @@
                 currentRouteName = name;
                 currentRouteId = id;
                 departureTime = time;
+                tripTrack = [];
+                totalDistance = 0;
+                tripStartTime = null;
+                tripDate = new Date().toISOString().slice(0, 10);
 
                 fetch(file)
                     .then(res => res.json())
@@ -388,8 +427,9 @@
                 return;
             }
 
-            // Auto end with no next route — idle state, hide left panel
+            // Auto end with no next route — save trip, show idle
             if (auto && !nextRouteFile) {
+                saveTrip();
                 stopAllTracking();
                 set(busRef, { active: false });
                 routeStops = [];
@@ -399,13 +439,14 @@
                 return;
             }
 
-            // Manual end — always return to route list
+            // Manual end — save trip, return to route list
+            saveTrip();
             stopAllTracking();
             set(busRef, { active: false });
             routeStops = [];
             currentStopIndex = 0;
             nextRouteFile = null; nextRouteName = null; nextRouteId = null; nextDepartureTime = null;
-            document.querySelector('.leftPanel').style.display = 'flex'; // reset for next time
+            document.querySelector('.leftPanel').style.display = 'flex';
             document.getElementById('driverScreen').style.display = 'none';
             showRouteList();
         }
@@ -466,5 +507,4 @@
     </div>
 
 </body>
-
 </html>
