@@ -73,6 +73,7 @@
 
         #tripMap {
             flex: 1;
+            min-height: 0;
         }
 
         .mapHeader {
@@ -119,6 +120,38 @@
             color: #aaa;
             font-size: 1.1rem;
         }
+
+        #stopLog {
+            background: #111;
+            color: white;
+            max-height: 220px;
+            overflow-y: auto;
+            border-top: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .stopLogHeader {
+            display: flex;
+            gap: 12px;
+            padding: 8px 16px;
+            border-bottom: 1px solid #333;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .stopLogRow {
+            display: flex;
+            gap: 12px;
+            padding: 10px 16px;
+            border-bottom: 1px solid #222;
+            font-size: 1rem;
+            align-items: center;
+        }
+
+        .slName { flex: 1; }
+        .slScheduled { color: #aaa; min-width: 45px; text-align: center; }
+        .slActual { min-width: 45px; text-align: center; }
+        .slDiff { min-width: 50px; text-align: right; font-weight: bold; }
     </style>
 
     <script type="module">
@@ -140,6 +173,7 @@
 
         let tripMap = null;
         let trackLayer = null;
+        let markerLayers = [];
 
         // -------------------------------------------------------
         // LOAD TRIP LIST
@@ -159,7 +193,6 @@
                 trips.push({ key: child.key, ...child.val() });
             });
 
-            // Sort newest first
             trips.sort((a, b) => b.date.localeCompare(a.date) || b.departureTime.localeCompare(a.departureTime));
 
             list.innerHTML = '';
@@ -200,29 +233,62 @@
                 }).addTo(tripMap);
             }
 
-            // Remove old track
+            // Remove old layers
             if (trackLayer) { tripMap.removeLayer(trackLayer); trackLayer = null; }
+            markerLayers.forEach(m => tripMap.removeLayer(m));
+            markerLayers = [];
 
-            if (!trip.track || trip.track.length < 2) return;
+            if (trip.track && trip.track.length >= 2) {
+                const coords = trip.track.map(p => [p.lat, p.lng]);
 
-            const coords = trip.track.map(p => [p.lat, p.lng]);
+                trackLayer = L.polyline(coords, {
+                    color: '#007bff',
+                    weight: 4,
+                    opacity: 0.85
+                }).addTo(tripMap);
 
-            trackLayer = L.polyline(coords, {
-                color: '#007bff',
-                weight: 4,
-                opacity: 0.85
-            }).addTo(tripMap);
+                const startM = L.circleMarker(coords[0], { radius: 8, color: '#00cc44', fillColor: '#00cc44', fillOpacity: 1 })
+                    .addTo(tripMap).bindPopup('Plecare: ' + trip.startTime);
+                const endM = L.circleMarker(coords[coords.length - 1], { radius: 8, color: '#cc0000', fillColor: '#cc0000', fillOpacity: 1 })
+                    .addTo(tripMap).bindPopup('Sosire: ' + trip.endTime);
+                markerLayers.push(startM, endM);
 
-            // Start marker
-            L.circleMarker(coords[0], { radius: 8, color: '#00cc44', fillColor: '#00cc44', fillOpacity: 1 })
-                .addTo(tripMap).bindPopup('Plecare: ' + trip.startTime);
+                tripMap.fitBounds(trackLayer.getBounds(), { padding: [20, 20] });
+            }
 
-            // End marker
-            L.circleMarker(coords[coords.length - 1], { radius: 8, color: '#cc0000', fillColor: '#cc0000', fillOpacity: 1 })
-                .addTo(tripMap).bindPopup('Sosire: ' + trip.endTime);
-
-            tripMap.fitBounds(trackLayer.getBounds(), { padding: [20, 20] });
             tripMap.invalidateSize();
+
+            // Stop log
+            const stopLogDiv = document.getElementById('stopLog');
+            stopLogDiv.innerHTML = '';
+
+            if (trip.stops && trip.stops.length > 0) {
+                const header = document.createElement('div');
+                header.className = 'stopLogHeader';
+                header.innerHTML = `
+                    <span style="flex:1">Statie</span>
+                    <span style="min-width:45px;text-align:center">Prog.</span>
+                    <span style="min-width:45px;text-align:center">Real</span>
+                    <span style="min-width:50px;text-align:right">Status</span>
+                `;
+                stopLogDiv.appendChild(header);
+
+                trip.stops.forEach(s => {
+                    const color = s.diff === 0 ? '#ccc' : s.diff > 0 ? '#ff6b6b' : '#6bff8e';
+                    const diffText = s.diff === 0 ? 'La timp' : s.diff > 0 ? `+${s.diff}'` : `${s.diff}'`;
+                    const row = document.createElement('div');
+                    row.className = 'stopLogRow';
+                    row.innerHTML = `
+                        <span class="slName">${s.name}</span>
+                        <span class="slScheduled">${s.scheduled}</span>
+                        <span class="slActual">${s.actual}</span>
+                        <span class="slDiff" style="color:${color}">${diffText}</span>
+                    `;
+                    stopLogDiv.appendChild(row);
+                });
+            } else {
+                stopLogDiv.innerHTML = '<div class="emptyMsg" style="padding:12px 20px;font-size:0.9rem;">Nu exista date pentru statii.</div>';
+            }
         }
 
         window.backToList = function() {
@@ -252,6 +318,7 @@
             <div class="mapStats" id="mapStats">-</div>
         </div>
         <div id="tripMap"></div>
+        <div id="stopLog"></div>
     </div>
 
 </body>
