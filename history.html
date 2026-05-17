@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Istoric</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        #historyScreen {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: #111;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        #tripList {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .tripRow {
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid #222;
+            padding: 16px 20px;
+            cursor: pointer;
+            gap: 4px;
+        }
+
+        .tripRow:active {
+            background: #222;
+        }
+
+        .tripRowTop {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tripName {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .tripDate {
+            font-size: 1rem;
+            color: #aaa;
+        }
+
+        .tripMeta {
+            font-size: 0.95rem;
+            color: #aaa;
+            display: flex;
+            gap: 20px;
+        }
+
+        .tripMeta span {
+            color: #ccc;
+        }
+
+        #mapView {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            background: #111;
+        }
+
+        #tripMap {
+            flex: 1;
+        }
+
+        .mapHeader {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            background: #111;
+            color: white;
+            border-bottom: 1px solid #333;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .mapHeader .backBtn {
+            font-size: 1.4rem;
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        .mapTitle {
+            flex: 1;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .mapStats {
+            font-size: 0.9rem;
+            color: #aaa;
+            text-align: right;
+        }
+
+        .emptyMsg {
+            padding: 40px 20px;
+            text-align: center;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .loadingMsg {
+            padding: 40px 20px;
+            text-align: center;
+            color: #aaa;
+            font-size: 1.1rem;
+        }
+    </style>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
+            authDomain: "bike-trackerv7.firebaseapp.com",
+            databaseURL: "https://bike-trackerv7-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "bike-trackerv7",
+            storageBucket: "bike-trackerv7.firebasestorage.app",
+            messagingSenderId: "829142915200",
+            appId: "1:829142915200:web:cd37f3234ecb850421ae65"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let tripMap = null;
+        let trackLayer = null;
+
+        // -------------------------------------------------------
+        // LOAD TRIP LIST
+        // -------------------------------------------------------
+        async function loadTrips() {
+            const list = document.getElementById('tripList');
+            list.innerHTML = '<div class="loadingMsg">Se incarca...</div>';
+
+            const snapshot = await get(ref(db, 'trips'));
+            if (!snapshot.exists()) {
+                list.innerHTML = '<div class="emptyMsg">Nu exista curse inregistrate.</div>';
+                return;
+            }
+
+            const trips = [];
+            snapshot.forEach(child => {
+                trips.push({ key: child.key, ...child.val() });
+            });
+
+            // Sort newest first
+            trips.sort((a, b) => b.date.localeCompare(a.date) || b.departureTime.localeCompare(a.departureTime));
+
+            list.innerHTML = '';
+            trips.forEach(trip => {
+                const row = document.createElement('div');
+                row.className = 'tripRow';
+                row.innerHTML = `
+                    <div class="tripRowTop">
+                        <span class="tripName">${trip.routeName || '-'}</span>
+                        <span class="tripDate">${trip.date || '-'}</span>
+                    </div>
+                    <div class="tripMeta">
+                        <span>&#128344; ${trip.startTime || '-'} – ${trip.endTime || '-'}</span>
+                        <span>&#128205; ${trip.distanceKm || '0'} km</span>
+                    </div>
+                `;
+                row.onclick = () => showTrip(trip);
+                list.appendChild(row);
+            });
+        }
+
+        // -------------------------------------------------------
+        // SHOW TRIP ON MAP
+        // -------------------------------------------------------
+        window.showTrip = function(trip) {
+            document.getElementById('historyScreen').style.display = 'none';
+            document.getElementById('mapView').style.display = 'flex';
+
+            document.getElementById('mapTitle').textContent = trip.routeName || '-';
+            document.getElementById('mapStats').textContent = `${trip.date} · ${trip.distanceKm} km · ${trip.startTime} – ${trip.endTime}`;
+
+            // Init map if needed
+            if (!tripMap) {
+                tripMap = L.map('tripMap').setView([47.132, 24.491], 14);
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(tripMap);
+            }
+
+            // Remove old track
+            if (trackLayer) { tripMap.removeLayer(trackLayer); trackLayer = null; }
+
+            if (!trip.track || trip.track.length < 2) return;
+
+            const coords = trip.track.map(p => [p.lat, p.lng]);
+
+            trackLayer = L.polyline(coords, {
+                color: '#007bff',
+                weight: 4,
+                opacity: 0.85
+            }).addTo(tripMap);
+
+            // Start marker
+            L.circleMarker(coords[0], { radius: 8, color: '#00cc44', fillColor: '#00cc44', fillOpacity: 1 })
+                .addTo(tripMap).bindPopup('Plecare: ' + trip.startTime);
+
+            // End marker
+            L.circleMarker(coords[coords.length - 1], { radius: 8, color: '#cc0000', fillColor: '#cc0000', fillOpacity: 1 })
+                .addTo(tripMap).bindPopup('Sosire: ' + trip.endTime);
+
+            tripMap.fitBounds(trackLayer.getBounds(), { padding: [20, 20] });
+            tripMap.invalidateSize();
+        }
+
+        window.backToList = function() {
+            document.getElementById('mapView').style.display = 'none';
+            document.getElementById('historyScreen').style.display = 'flex';
+        }
+
+        window.addEventListener('DOMContentLoaded', loadTrips);
+    </script>
+</head>
+
+<body>
+
+    <!-- TRIP LIST -->
+    <div id="historyScreen">
+        <div class="driverHeader" style="border-bottom: 1px solid #333;">
+            <div class="headerDate" style="color:white;">Istoric Curse</div>
+        </div>
+        <div id="tripList"></div>
+    </div>
+
+    <!-- MAP VIEW -->
+    <div id="mapView">
+        <div class="mapHeader">
+            <button class="backBtn" onclick="backToList()">&#8592;</button>
+            <div class="mapTitle" id="mapTitle">-</div>
+            <div class="mapStats" id="mapStats">-</div>
+        </div>
+        <div id="tripMap"></div>
+    </div>
+
+</body>
+</html>
