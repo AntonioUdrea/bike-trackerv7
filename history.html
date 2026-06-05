@@ -71,11 +71,6 @@
             background: #111;
         }
 
-        #tripMap {
-            flex: 1;
-            min-height: 0;
-        }
-
         .mapHeader {
             display: flex;
             align-items: center;
@@ -107,6 +102,73 @@
             text-align: right;
         }
 
+        /* Side by side container */
+        .mapBody {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            min-height: 0;
+        }
+
+        #tripMap {
+            flex: 1;
+            min-width: 0;
+        }
+
+        #stopLog {
+            width: 260px;
+            min-width: 260px;
+            background: #111;
+            color: white;
+            overflow-y: auto;
+            border-left: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .stopLogHeader {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #333;
+            font-size: 0.8rem;
+            color: #aaa;
+            position: sticky;
+            top: 0;
+            background: #111;
+        }
+
+        .stopLogHeaderRow {
+            display: flex;
+            gap: 8px;
+        }
+
+        .stopLogRow {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #222;
+            font-size: 0.95rem;
+        }
+
+        .slName {
+            font-weight: bold;
+            color: white;
+        }
+
+        .slTimes {
+            display: flex;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .slDiff {
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
         .emptyMsg {
             padding: 40px 20px;
             text-align: center;
@@ -121,37 +183,12 @@
             font-size: 1.1rem;
         }
 
-        #stopLog {
-            background: #111;
-            color: white;
-            max-height: 220px;
-            overflow-y: auto;
-            border-top: 1px solid #333;
-            flex-shrink: 0;
+        .noStopsMsg {
+            padding: 20px 12px;
+            text-align: center;
+            color: #555;
+            font-size: 0.9rem;
         }
-
-        .stopLogHeader {
-            display: flex;
-            gap: 12px;
-            padding: 8px 16px;
-            border-bottom: 1px solid #333;
-            font-size: 0.85rem;
-            color: #aaa;
-        }
-
-        .stopLogRow {
-            display: flex;
-            gap: 12px;
-            padding: 10px 16px;
-            border-bottom: 1px solid #222;
-            font-size: 1rem;
-            align-items: center;
-        }
-
-        .slName { flex: 1; }
-        .slScheduled { color: #aaa; min-width: 45px; text-align: center; }
-        .slActual { min-width: 45px; text-align: center; }
-        .slDiff { min-width: 50px; text-align: right; font-weight: bold; }
     </style>
 
     <script type="module">
@@ -258,7 +295,7 @@
 
             tripMap.invalidateSize();
 
-            // Stop log
+            // Stop log — side panel
             const stopLogDiv = document.getElementById('stopLog');
             stopLogDiv.innerHTML = '';
 
@@ -266,10 +303,12 @@
                 const header = document.createElement('div');
                 header.className = 'stopLogHeader';
                 header.innerHTML = `
-                    <span style="flex:1">Statie</span>
-                    <span style="min-width:45px;text-align:center">Prog.</span>
-                    <span style="min-width:45px;text-align:center">Real</span>
-                    <span style="min-width:50px;text-align:right">Status</span>
+                    <div class="stopLogHeaderRow">
+                        <span style="flex:1">Statie</span>
+                    </div>
+                    <div class="stopLogHeaderRow" style="color:#666;font-size:0.75rem;">
+                        <span style="flex:1">Prog. / Real / Status</span>
+                    </div>
                 `;
                 stopLogDiv.appendChild(header);
 
@@ -280,14 +319,17 @@
                     row.className = 'stopLogRow';
                     row.innerHTML = `
                         <span class="slName">${s.name}</span>
-                        <span class="slScheduled">${s.scheduled}</span>
-                        <span class="slActual">${s.actual}</span>
-                        <span class="slDiff" style="color:${color}">${diffText}</span>
+                        <div class="slTimes">
+                            <span>${s.scheduled}</span>
+                            <span>→</span>
+                            <span>${s.actual}</span>
+                            <span class="slDiff" style="color:${color}">${diffText}</span>
+                        </div>
                     `;
                     stopLogDiv.appendChild(row);
                 });
             } else {
-                stopLogDiv.innerHTML = '<div class="emptyMsg" style="padding:12px 20px;font-size:0.9rem;">Nu exista date pentru statii.</div>';
+                stopLogDiv.innerHTML = '<div class="noStopsMsg">Nu exista date pentru statii.</div>';
             }
         }
 
@@ -317,8 +359,10 @@
             <div class="mapTitle" id="mapTitle">-</div>
             <div class="mapStats" id="mapStats">-</div>
         </div>
-        <div id="tripMap"></div>
-        <div id="stopLog"></div>
+        <div class="mapBody">
+            <div id="tripMap"></div>
+            <div id="stopLog"></div>
+        </div>
     </div>
 
 </body>
