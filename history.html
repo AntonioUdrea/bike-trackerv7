@@ -17,60 +17,34 @@
             color: white;
             box-sizing: border-box;
         }
-
-        #tripList {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
-
+        #tripList { display: flex; flex-direction: column; flex: 1; }
         .tripRow {
             display: flex;
-            flex-direction: column;
-            border-bottom: 1px solid #222;
-            padding: 16px 20px;
-            cursor: pointer;
-            gap: 4px;
-        }
-
-        .tripRow:active {
-            background: #222;
-        }
-
-        .tripRowTop {
-            display: flex;
-            justify-content: space-between;
+            flex-direction: row;
             align-items: center;
+            border-bottom: 1px solid #222;
+            padding: 14px 20px;
+            cursor: pointer;
+            gap: 12px;
         }
-
-        .tripName {
-            font-size: 1.2rem;
-            font-weight: bold;
+        .tripRow:active { background: #222; }
+        .tripRowText { display: flex; flex-direction: column; flex: 1; gap: 4px; }
+        .tripRowTop { display: flex; justify-content: space-between; align-items: center; }
+        .tripName { font-size: 1.2rem; font-weight: bold; }
+        .tripDate { font-size: 1rem; color: #aaa; }
+        .tripMeta { font-size: 0.95rem; color: #aaa; display: flex; gap: 20px; }
+        .tripMeta span { color: #ccc; }
+        .deleteBtn {
+            background: transparent;
+            border: none;
+            color: #555;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px;
+            flex-shrink: 0;
         }
-
-        .tripDate {
-            font-size: 1rem;
-            color: #aaa;
-        }
-
-        .tripMeta {
-            font-size: 0.95rem;
-            color: #aaa;
-            display: flex;
-            gap: 20px;
-        }
-
-        .tripMeta span {
-            color: #ccc;
-        }
-
-        #mapView {
-            display: none;
-            flex-direction: column;
-            height: 100vh;
-            background: #111;
-        }
-
+        .deleteBtn:active { color: #cc0000; }
+        #mapView { display: none; flex-direction: column; height: 100vh; background: #111; }
         .mapHeader {
             display: flex;
             align-items: center;
@@ -81,7 +55,6 @@
             gap: 12px;
             flex-shrink: 0;
         }
-
         .mapHeader .backBtn {
             font-size: 1.4rem;
             background: transparent;
@@ -89,32 +62,10 @@
             color: white;
             cursor: pointer;
         }
-
-        .mapTitle {
-            flex: 1;
-            font-size: 1rem;
-            font-weight: bold;
-        }
-
-        .mapStats {
-            font-size: 0.9rem;
-            color: #aaa;
-            text-align: right;
-        }
-
-        /* Side by side container */
-        .mapBody {
-            display: flex;
-            flex-direction: row;
-            flex: 1;
-            min-height: 0;
-        }
-
-        #tripMap {
-            flex: 1;
-            min-width: 0;
-        }
-
+        .mapTitle { flex: 1; font-size: 1rem; font-weight: bold; }
+        .mapStats { font-size: 0.9rem; color: #aaa; text-align: right; }
+        .mapBody { display: flex; flex-direction: row; flex: 1; min-height: 0; }
+        #tripMap { flex: 1; min-width: 0; }
         #stopLog {
             width: 260px;
             min-width: 260px;
@@ -124,7 +75,6 @@
             border-left: 1px solid #333;
             flex-shrink: 0;
         }
-
         .stopLogHeader {
             display: flex;
             flex-direction: column;
@@ -137,12 +87,7 @@
             top: 0;
             background: #111;
         }
-
-        .stopLogHeaderRow {
-            display: flex;
-            gap: 8px;
-        }
-
+        .stopLogHeaderRow { display: flex; gap: 8px; }
         .stopLogRow {
             display: flex;
             flex-direction: column;
@@ -151,49 +96,17 @@
             border-bottom: 1px solid #222;
             font-size: 0.95rem;
         }
-
-        .slName {
-            font-weight: bold;
-            color: white;
-        }
-
-        .slTimes {
-            display: flex;
-            gap: 8px;
-            font-size: 0.85rem;
-            color: #aaa;
-        }
-
-        .slDiff {
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-
-        .emptyMsg {
-            padding: 40px 20px;
-            text-align: center;
-            color: #555;
-            font-size: 1.1rem;
-        }
-
-        .loadingMsg {
-            padding: 40px 20px;
-            text-align: center;
-            color: #aaa;
-            font-size: 1.1rem;
-        }
-
-        .noStopsMsg {
-            padding: 20px 12px;
-            text-align: center;
-            color: #555;
-            font-size: 0.9rem;
-        }
+        .slName { font-weight: bold; color: white; }
+        .slTimes { display: flex; gap: 8px; font-size: 0.85rem; color: #aaa; }
+        .slDiff { font-size: 0.9rem; font-weight: bold; }
+        .emptyMsg { padding: 40px 20px; text-align: center; color: #555; font-size: 1.1rem; }
+        .loadingMsg { padding: 40px 20px; text-align: center; color: #aaa; font-size: 1.1rem; }
+        .noStopsMsg { padding: 20px 12px; text-align: center; color: #555; font-size: 0.9rem; }
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getDatabase, ref, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
@@ -212,31 +125,25 @@
         let trackLayer = null;
         let markerLayers = [];
 
-        // -------------------------------------------------------
-        // LOAD TRIP LIST
-        // -------------------------------------------------------
         async function loadTrips() {
             const list = document.getElementById('tripList');
             list.innerHTML = '<div class="loadingMsg">Se incarca...</div>';
-
             const snapshot = await get(ref(db, 'trips'));
             if (!snapshot.exists()) {
                 list.innerHTML = '<div class="emptyMsg">Nu exista curse inregistrate.</div>';
                 return;
             }
-
             const trips = [];
-            snapshot.forEach(child => {
-                trips.push({ key: child.key, ...child.val() });
-            });
-
+            snapshot.forEach(child => { trips.push({ key: child.key, ...child.val() }); });
             trips.sort((a, b) => b.date.localeCompare(a.date) || b.departureTime.localeCompare(a.departureTime));
-
             list.innerHTML = '';
             trips.forEach(trip => {
                 const row = document.createElement('div');
                 row.className = 'tripRow';
-                row.innerHTML = `
+
+                const textDiv = document.createElement('div');
+                textDiv.className = 'tripRowText';
+                textDiv.innerHTML = `
                     <div class="tripRowTop">
                         <span class="tripName">${trip.routeName || '-'}</span>
                         <span class="tripDate">${trip.date || '-'}</span>
@@ -246,22 +153,30 @@
                         <span>&#128205; ${trip.distanceKm || '0'} km</span>
                     </div>
                 `;
-                row.onclick = () => showTrip(trip);
+                textDiv.onclick = () => showTrip(trip);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'deleteBtn';
+                deleteBtn.textContent = '🗑';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm('Stergi aceasta cursa?')) {
+                        remove(ref(db, `trips/${trip.key}`)).then(() => loadTrips());
+                    }
+                };
+
+                row.appendChild(textDiv);
+                row.appendChild(deleteBtn);
                 list.appendChild(row);
             });
         }
 
-        // -------------------------------------------------------
-        // SHOW TRIP ON MAP
-        // -------------------------------------------------------
         window.showTrip = function(trip) {
             document.getElementById('historyScreen').style.display = 'none';
             document.getElementById('mapView').style.display = 'flex';
-
             document.getElementById('mapTitle').textContent = trip.routeName || '-';
             document.getElementById('mapStats').textContent = `${trip.date} · ${trip.distanceKm} km · ${trip.startTime} – ${trip.endTime}`;
 
-            // Init map if needed
             if (!tripMap) {
                 tripMap = L.map('tripMap').setView([47.132, 24.491], 14);
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -270,48 +185,32 @@
                 }).addTo(tripMap);
             }
 
-            // Remove old layers
             if (trackLayer) { tripMap.removeLayer(trackLayer); trackLayer = null; }
             markerLayers.forEach(m => tripMap.removeLayer(m));
             markerLayers = [];
 
             if (trip.track && trip.track.length >= 2) {
                 const coords = trip.track.map(p => [p.lat, p.lng]);
-
-                trackLayer = L.polyline(coords, {
-                    color: '#007bff',
-                    weight: 4,
-                    opacity: 0.85
-                }).addTo(tripMap);
-
+                trackLayer = L.polyline(coords, { color: '#007bff', weight: 4, opacity: 0.85 }).addTo(tripMap);
                 const startM = L.circleMarker(coords[0], { radius: 8, color: '#00cc44', fillColor: '#00cc44', fillOpacity: 1 })
                     .addTo(tripMap).bindPopup('Plecare: ' + trip.startTime);
                 const endM = L.circleMarker(coords[coords.length - 1], { radius: 8, color: '#cc0000', fillColor: '#cc0000', fillOpacity: 1 })
                     .addTo(tripMap).bindPopup('Sosire: ' + trip.endTime);
                 markerLayers.push(startM, endM);
-
                 tripMap.fitBounds(trackLayer.getBounds(), { padding: [20, 20] });
             }
-
             tripMap.invalidateSize();
 
-            // Stop log — side panel
             const stopLogDiv = document.getElementById('stopLog');
             stopLogDiv.innerHTML = '';
-
             if (trip.stops && trip.stops.length > 0) {
                 const header = document.createElement('div');
                 header.className = 'stopLogHeader';
                 header.innerHTML = `
-                    <div class="stopLogHeaderRow">
-                        <span style="flex:1">Statie</span>
-                    </div>
-                    <div class="stopLogHeaderRow" style="color:#666;font-size:0.75rem;">
-                        <span style="flex:1">Prog. / Real / Status</span>
-                    </div>
+                    <div class="stopLogHeaderRow"><span style="flex:1">Statie</span></div>
+                    <div class="stopLogHeaderRow" style="color:#666;font-size:0.75rem;"><span style="flex:1">Prog. / Real / Status</span></div>
                 `;
                 stopLogDiv.appendChild(header);
-
                 trip.stops.forEach(s => {
                     const color = s.diff === 0 ? '#ccc' : s.diff > 0 ? '#ff6b6b' : '#6bff8e';
                     const diffText = s.diff === 0 ? 'La timp' : s.diff > 0 ? `+${s.diff}'` : `${s.diff}'`;
@@ -343,16 +242,12 @@
 </head>
 
 <body>
-
-    <!-- TRIP LIST -->
     <div id="historyScreen">
         <div class="driverHeader" style="border-bottom: 1px solid #333;">
             <div class="headerDate" style="color:white;">Istoric Curse</div>
         </div>
         <div id="tripList"></div>
     </div>
-
-    <!-- MAP VIEW -->
     <div id="mapView">
         <div class="mapHeader">
             <button class="backBtn" onclick="backToList()">&#8592;</button>
@@ -364,6 +259,5 @@
             <div id="stopLog"></div>
         </div>
     </div>
-
 </body>
 </html>
