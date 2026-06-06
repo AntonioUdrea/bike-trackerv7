@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -10,7 +9,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.css"/>
     <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.js"></script>
     <title>Map</title>
-
     <style>
         #bottomPanel {
             position: fixed;
@@ -27,7 +25,6 @@
             box-sizing: border-box;
         }
         #bottomPanel.open { bottom: 0; }
-
         #routeDetail {
             position: fixed;
             bottom: -55vh;
@@ -43,7 +40,6 @@
             box-sizing: border-box;
         }
         #routeDetail.open { bottom: 0; }
-
         .panelHandle {
             display: flex;
             justify-content: space-between;
@@ -62,7 +58,6 @@
             padding: 0;
         }
         .panelContent { overflow-y: auto; flex: 1; }
-
         .depRow {
             display: flex;
             align-items: center;
@@ -90,7 +85,6 @@
         .depTime { font-size: 1.1rem; font-weight: bold; text-align: right; }
         .depTime.live { color: #6bff8e; }
         .liveIcon { font-size: 0.7rem; }
-
         .rdHeader {
             display: flex;
             align-items: center;
@@ -121,7 +115,6 @@
         }
         .rdTitle { flex: 1; font-size: 1rem; font-weight: bold; }
         .rdStopList { overflow-y: auto; flex: 1; padding: 4px 0; }
-
         .rdStopRow {
             display: flex;
             align-items: stretch;
@@ -165,7 +158,6 @@
             padding-left: 8px;
         }
         .rdStopTime.live { color: #6bff8e; font-weight: bold; }
-
         #panelOverlay {
             display: none;
             position: fixed;
@@ -175,7 +167,6 @@
             z-index: 3900;
         }
         #panelOverlay.open { display: block; }
-
         .noDepMsg {
             padding: 24px 16px;
             color: #555;
@@ -184,9 +175,7 @@
         }
     </style>
 </head>
-
 <body>
-
     <div id="mapScreen">
         <div id="map">
             <div id="infoPanel">
@@ -194,9 +183,7 @@
             </div>
         </div>
     </div>
-
     <button id="menuBtn" onclick="toggleMenu()">☰</button>
-
     <div id="sideMenu">
         <div class="menuHeader">Selecteaza Linia</div>
         <button onclick="selectRouteFromMenu('1T.geojson','1','BIG - LEONI','15:10')">1 TUR</button>
@@ -211,10 +198,8 @@
         <button onclick="selectRouteFromMenu('8T.geojson','8','BIG - SIMPOZIONULUI','16:00')">8 TUR</button>
         <button onclick="selectRouteFromMenu('8R.geojson','8','SIMPOZIONULUI - BIG','16:20')">8 RETUR</button>
     </div>
-
     <div id="menuOverlay" onclick="toggleMenu()"></div>
     <div id="panelOverlay" onclick="closePanels()"></div>
-
     <div id="bottomPanel">
         <div class="panelHandle">
             <span class="panelTitle" id="panelTitle">Statia</span>
@@ -222,7 +207,6 @@
         </div>
         <div class="panelContent" id="panelContent"></div>
     </div>
-
     <div id="routeDetail">
         <div class="rdHeader">
             <button class="rdBack" onclick="backToStopPanel()">&#8592;</button>
@@ -231,11 +215,9 @@
         </div>
         <div class="rdStopList" id="rdStopList"></div>
     </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
         const firebaseConfig = {
             apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
             authDomain: "bike-trackerv7.firebaseapp.com",
@@ -245,30 +227,24 @@
             messagingSenderId: "829142915200",
             appId: "1:829142915200:web:cd37f3234ecb850421ae65"
         };
-
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // -------------------------------------------------------
         // MAP
-        // -------------------------------------------------------
         const map = L.map('map', {
             fullscreenControl: true,
             fullscreenControlOptions: { position: 'topleft' }
         }).setView([47.132, 24.491], 14);
-
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
-
         const markerIcon = L.icon({
             iconUrl: 'markerIcon.png',
             iconSize: [15, 15],
             iconAnchor: [10, 5],
             popupAnchor: [-2, -5],
         });
-
         const markerBus = L.icon({
             iconUrl: 'markerBus.png',
             iconSize: [75, 65],
@@ -276,44 +252,42 @@
             popupAnchor: [0, -32],
         });
 
-        // -------------------------------------------------------
         // ROUTES CONFIG
-        // -------------------------------------------------------
         const ROUTES = [
             {
                 id: '1', name: 'Linia 1',
                 departures: [
-                    { file: '1T.geojson',  label: 'BIG - LEONI',       time: '15:10', nextFile: '1R.geojson',  nextLabel: 'LEONI - BIG',       nextTime: '15:40' },
-                    { file: '1R.geojson',  label: 'LEONI - BIG',       time: '15:40', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '1T.geojson',  label: 'BIG - LEONI',         time: '15:10', nextFile: '1R.geojson',  nextLabel: 'LEONI - BIG',         nextTime: '15:40' },
+                    { file: '1R.geojson',  label: 'LEONI - BIG',         time: '15:40', nextFile: null, nextLabel: null, nextTime: null },
                 ]
             },
             {
                 id: '1B', name: 'Linia 1B',
                 departures: [
-                    { file: '1BT.geojson', label: 'BIG - CUZA VODA',   time: '16:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG',   nextTime: '18:00' },
-                    { file: '1BR.geojson', label: 'CUZA VODA - BIG',   time: '18:00', nextFile: null, nextLabel: null, nextTime: null },
-                    { file: '1BT.geojson', label: 'BIG - CUZA VODA',   time: '17:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG',   nextTime: '19:00' },
-                    { file: '1BR.geojson', label: 'CUZA VODA - BIG',   time: '19:00', nextFile: null, nextLabel: null, nextTime: null },
-                    { file: '1BT.geojson', label: 'BIG - CUZA VODA',   time: '18:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG',   nextTime: '20:00' },
-                    { file: '1BR.geojson', label: 'CUZA VODA - BIG',   time: '20:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '1BT.geojson', label: 'BIG - CUZA VODA',     time: '16:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG',     nextTime: '18:00' },
+                    { file: '1BR.geojson', label: 'CUZA VODA - BIG',     time: '18:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '1BT.geojson', label: 'BIG - CUZA VODA',     time: '17:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG',     nextTime: '19:00' },
+                    { file: '1BR.geojson', label: 'CUZA VODA - BIG',     time: '19:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '1BT.geojson', label: 'BIG - CUZA VODA',     time: '18:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG',     nextTime: '20:00' },
+                    { file: '1BR.geojson', label: 'CUZA VODA - BIG',     time: '20:00', nextFile: null, nextLabel: null, nextTime: null },
                 ]
             },
             {
                 id: '1C', name: 'Linia 1C',
                 departures: [
-                    { file: '1T.geojson',  label: 'BIG - LEONI',       time: '15:10', nextFile: '1CR.geojson', nextLabel: 'LEONI - BIG',       nextTime: '15:40' },
-                    { file: '1CR.geojson', label: 'LEONI - BIG',       time: '15:40', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '1T.geojson',  label: 'BIG - LEONI',         time: '15:10', nextFile: '1CR.geojson', nextLabel: 'LEONI - BIG',         nextTime: '15:40' },
+                    { file: '1CR.geojson', label: 'LEONI - BIG',         time: '15:40', nextFile: null, nextLabel: null, nextTime: null },
                 ]
             },
             {
                 id: '3', name: 'Linia 3',
                 departures: [
-                    { file: '3T.geojson',  label: 'BIG - INFOEL',      time: '07:30', nextFile: '3R.geojson',  nextLabel: 'INFOEL - BIG',      nextTime: '14:00' },
-                    { file: '3T.geojson',  label: 'BIG - INFOEL',      time: '19:20', nextFile: '3BR.geojson', nextLabel: 'INFOEL - BIG',      nextTime: '19:40' },
-                    { file: '3R.geojson',  label: 'INFOEL - BIG',      time: '12:30', nextFile: null, nextLabel: null, nextTime: null },
-                    { file: '3R.geojson',  label: 'INFOEL - BIG',      time: '13:00', nextFile: null, nextLabel: null, nextTime: null },
-                    { file: '3R.geojson',  label: 'INFOEL - BIG',      time: '13:30', nextFile: null, nextLabel: null, nextTime: null },
-                    { file: '3R.geojson',  label: 'INFOEL - BIG',      time: '14:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '3T.geojson',  label: 'BIG - INFOEL',        time: '07:30', nextFile: '3R.geojson',  nextLabel: 'INFOEL - BIG',        nextTime: '14:00' },
+                    { file: '3T.geojson',  label: 'BIG - INFOEL',        time: '19:20', nextFile: '3BR.geojson', nextLabel: 'INFOEL - BIG',        nextTime: '19:40' },
+                    { file: '3R.geojson',  label: 'INFOEL - BIG',        time: '12:30', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '3R.geojson',  label: 'INFOEL - BIG',        time: '13:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '3R.geojson',  label: 'INFOEL - BIG',        time: '13:30', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '3R.geojson',  label: 'INFOEL - BIG',        time: '14:00', nextFile: null, nextLabel: null, nextTime: null },
                 ]
             },
             {
@@ -337,20 +311,15 @@
             },
         ];
 
-        // -------------------------------------------------------
         // STATE
-        // -------------------------------------------------------
         const geojsonCache = {};
         let liveData = null;
         let routeLayer = null;
         let stopMarkers = [];
         let busMarker = null;
         let lastStopPanelName = null;
-        let lastDepForDetail = null;
 
-        // -------------------------------------------------------
         // PRELOAD ALL GEOJSON
-        // -------------------------------------------------------
         async function preloadAll() {
             const files = [...new Set(ROUTES.flatMap(r => r.departures.map(d => d.file)))];
             await Promise.all(files.map(async file => {
@@ -361,9 +330,7 @@
             }));
         }
 
-        // -------------------------------------------------------
         // HELPERS
-        // -------------------------------------------------------
         function calcStopTime(depTime, travelMinutes) {
             const [h, m] = depTime.split(':').map(Number);
             const total = h * 60 + m + (travelMinutes || 0);
@@ -375,18 +342,46 @@
             return n.getHours() * 60 + n.getMinutes();
         }
 
+        // FIX 1: Exact match on routeId and label using stored routeId from Firebase
         function isLiveDep(routeId, label) {
-            if (!liveData || !liveData.active || !liveData.route) return false;
-            return liveData.route.includes(routeId) && liveData.route.includes(label.split(' - ')[0]);
+            if (!liveData || !liveData.active) return false;
+            // liveData.routeId is set by driver.html (exact match)
+            // liveData.route is "LABEL TIME" e.g. "BIG - LEONI 15:10"
+            if (liveData.routeId !== routeId) return false;
+            // Check label matches start of route string
+            return liveData.route && liveData.route.startsWith(label);
         }
 
-        // -------------------------------------------------------
-        // DEPARTURES FOR A STOP
-        // -------------------------------------------------------
+        // FIX 2: Format time as minutes countdown if < 15 mins, else show time
+        function formatDepTime(stopTime, isLive) {
+            const now = new Date();
+            const [sh, sm] = stopTime.split(':').map(Number);
+            const scheduled = new Date();
+            scheduled.setHours(sh, sm, 0, 0);
+            // Handle midnight wraparound
+            let diffMins = Math.round((scheduled - now) / 60000);
+            if (diffMins < -720) diffMins += 1440; // next day
+            if (diffMins < 0) diffMins = 0;
+
+            let timeText;
+            if (diffMins === 0) {
+                timeText = 'acum';
+            } else if (diffMins < 15) {
+                timeText = `${diffMins} min`;
+            } else {
+                timeText = stopTime;
+            }
+
+            if (isLive) {
+                return `<span class="depTime live">${timeText} <span class="liveIcon">●</span></span>`;
+            }
+            return `<span class="depTime">${timeText}</span>`;
+        }
+
+        // FIX 3: 24h window with midnight wraparound
         function getDepsForStop(stopName) {
             const nm = nowMins();
             const results = [];
-
             ROUTES.forEach(route => {
                 route.departures.forEach(dep => {
                     const data = geojsonCache[dep.file];
@@ -396,13 +391,12 @@
                         f.properties.name === stopName
                     );
                     if (!stop) return;
-
                     const stopTime = calcStopTime(dep.time, stop.properties.travelMinutes || 0);
                     const [sh, sm] = stopTime.split(':').map(Number);
                     const sm2 = sh * 60 + sm;
-
-                    if (sm2 < nm || sm2 > nm + 120) return;
-
+                    // Adjust for midnight wraparound
+                    const adjustedSm2 = sm2 < nm ? sm2 + 1440 : sm2;
+                    if (adjustedSm2 - nm > 1440) return; // more than 24h away
                     results.push({
                         routeId: route.id,
                         routeName: route.name,
@@ -410,18 +404,16 @@
                         file: dep.file,
                         depTime: dep.time,
                         stopTime,
+                        adjustedMins: adjustedSm2,
                         isLive: isLiveDep(route.id, dep.label)
                     });
                 });
             });
-
-            results.sort((a, b) => a.stopTime.localeCompare(b.stopTime));
-            return results.slice(0, 8);
+            results.sort((a, b) => a.adjustedMins - b.adjustedMins);
+            return results.slice(0, 10);
         }
 
-        // -------------------------------------------------------
-        // DRAW STOPS ON MAP FOR A FILE
-        // -------------------------------------------------------
+        // DRAW STOPS ON MAP
         function drawStops(file) {
             stopMarkers.forEach(m => map.removeLayer(m));
             stopMarkers = [];
@@ -438,65 +430,50 @@
                 });
         }
 
-        // -------------------------------------------------------
         // SHOW STOP PANEL
-        // -------------------------------------------------------
         function showStopPanel(stopName) {
             lastStopPanelName = stopName;
             const deps = getDepsForStop(stopName);
-
             document.getElementById('panelTitle').textContent = stopName;
             const content = document.getElementById('panelContent');
             content.innerHTML = '';
-
             if (deps.length === 0) {
-                content.innerHTML = '<div class="noDepMsg">Nu exista curse in urmatoarele 2 ore.</div>';
+                content.innerHTML = '<div class="noDepMsg">Nu exista curse in urmatoarele 24 ore.</div>';
             } else {
                 deps.forEach(dep => {
                     const row = document.createElement('div');
                     row.className = 'depRow';
-                    const timeHtml = dep.isLive
-                        ? `<span class="depTime live">${dep.stopTime} <span class="liveIcon">●</span></span>`
-                        : `<span class="depTime">${dep.stopTime}</span>`;
                     row.innerHTML = `
                         <div class="depBadge">${dep.routeId}</div>
                         <div class="depInfo">
                             <div class="depDirection">${dep.label}</div>
                             <div class="depSub">${dep.routeName}</div>
                         </div>
-                        ${timeHtml}
+                        ${formatDepTime(dep.stopTime, dep.isLive)}
                     `;
                     row.onclick = () => showRouteDetail(dep);
                     content.appendChild(row);
                 });
             }
-
             document.getElementById('routeDetail').classList.remove('open');
             document.getElementById('bottomPanel').classList.add('open');
             document.getElementById('panelOverlay').classList.add('open');
         }
         window.showStopPanel = showStopPanel;
 
-        // -------------------------------------------------------
         // SHOW ROUTE DETAIL
-        // -------------------------------------------------------
         function showRouteDetail(dep) {
-            lastDepForDetail = dep;
             const data = geojsonCache[dep.file];
             if (!data) return;
-
             const stops = data.features
                 .filter(f => f.geometry.type === 'Point')
                 .sort((a, b) => a.id - b.id);
 
-            // Draw route line
             if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
             routeLayer = L.geoJSON(data, {
                 style: { color: '#cc0000', weight: 4, opacity: 1 },
                 pointToLayer: () => null
             }).addTo(map);
-
-            // Draw stop markers for this route
             drawStops(dep.file);
 
             document.getElementById('rdBadge').textContent = dep.routeId;
@@ -505,10 +482,10 @@
             const list = document.getElementById('rdStopList');
             list.innerHTML = '';
 
-            // Find live stop index
+            // FIX 1: Use exact routeId match for live stop
             let liveIdx = -1;
-            if (liveData && liveData.active && liveData.route &&
-                liveData.route.includes(dep.routeId)) {
+            if (liveData && liveData.active && liveData.routeId === dep.routeId &&
+                liveData.route && liveData.route.startsWith(dep.label)) {
                 liveIdx = stops.findIndex(s => s.properties.name === liveData.nextStop);
             }
 
@@ -517,16 +494,13 @@
                 const time = calcStopTime(dep.depTime, stop.properties.travelMinutes || 0);
                 const isLiveStop = i === liveIdx;
                 const isPassed = liveIdx >= 0 && i < liveIdx;
-
                 const row = document.createElement('div');
                 row.className = 'rdStopRow';
-
                 const topHidden = i === 0 ? 'hidden' : '';
                 const botHidden = i === stops.length - 1 ? 'hidden' : '';
                 const dotClass = isLiveStop ? 'liveStop' : isPassed ? 'passed' : '';
                 const nameClass = isLiveStop ? 'current' : isPassed ? 'passed' : '';
                 const timeClass = isLiveStop ? 'live' : '';
-
                 row.innerHTML = `
                     <div class="rdLine">
                         <div class="rdLineSeg ${topHidden}"></div>
@@ -551,57 +525,46 @@
         }
         window.showRouteDetail = showRouteDetail;
 
-        // -------------------------------------------------------
         // PANEL CONTROLS
-        // -------------------------------------------------------
         window.closePanels = function() {
             document.getElementById('bottomPanel').classList.remove('open');
             document.getElementById('routeDetail').classList.remove('open');
             document.getElementById('panelOverlay').classList.remove('open');
         }
-
         window.backToStopPanel = function() {
             document.getElementById('routeDetail').classList.remove('open');
             if (lastStopPanelName) {
                 document.getElementById('bottomPanel').classList.add('open');
             }
         }
-
         window.toggleMenu = function() {
             document.getElementById('sideMenu').classList.toggle('open');
             document.getElementById('menuOverlay').classList.toggle('open');
         }
-
         window.selectRouteFromMenu = function(file, routeId, label, depTime) {
             toggleMenu();
             showRouteDetail({ file, routeId, label, depTime });
         }
 
-        // -------------------------------------------------------
         // FIREBASE
-        // -------------------------------------------------------
         onValue(ref(db, 'bus'), (snapshot) => {
             liveData = snapshot.val();
-
             if (!liveData || !liveData.active) {
                 if (busMarker) { map.removeLayer(busMarker); busMarker = null; }
                 document.getElementById('infoPanelContent').innerHTML = 'Nicio cursa activa';
                 return;
             }
-
             const latlng = [liveData.lat, liveData.lng];
             if (!busMarker) {
                 busMarker = L.marker(latlng, { icon: markerBus }).addTo(map).bindPopup('').openPopup();
             } else {
                 busMarker.setLatLng(latlng);
             }
-
             busMarker.getPopup().setContent(`
                 <b>Urmatoarea statie:</b> ${liveData.nextStop}<br>
                 <b>Programat:</b> ${liveData.scheduledTime}<br>
                 <b>Status:</b> ${liveData.status}
             `).update();
-
             const statusColor = liveData.status.includes('+') ? '#ff6b6b'
                 : liveData.status.includes('-') ? '#6bff8e' : 'white';
             document.getElementById('infoPanelContent').innerHTML = `
@@ -611,12 +574,7 @@
             `;
         });
 
-        // -------------------------------------------------------
-        // INIT
-        // -------------------------------------------------------
         window.addEventListener('DOMContentLoaded', () => preloadAll());
-
     </script>
-
 </body>
 </html>
