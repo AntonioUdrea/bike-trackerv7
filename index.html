@@ -7,10 +7,230 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.css"/>
     <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.js"></script>
-    <link rel="stylesheet" href="style.css">
     <title>Map</title>
+
+    <style>
+        #bottomPanel {
+            position: fixed;
+            bottom: -55vh;
+            left: 0;
+            width: 100%;
+            height: 55vh;
+            background: #111;
+            color: white;
+            z-index: 4000;
+            transition: bottom 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        #bottomPanel.open { bottom: 0; }
+
+        #routeDetail {
+            position: fixed;
+            bottom: -55vh;
+            left: 0;
+            width: 100%;
+            height: 55vh;
+            background: #111;
+            color: white;
+            z-index: 4100;
+            transition: bottom 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        #routeDetail.open { bottom: 0; }
+
+        .panelHandle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px 8px 16px;
+            border-bottom: 1px solid #333;
+            flex-shrink: 0;
+        }
+        .panelTitle { font-size: 1.1rem; font-weight: bold; }
+        .panelClose {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 0;
+        }
+        .panelContent { overflow-y: auto; flex: 1; }
+
+        .depRow {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #222;
+            cursor: pointer;
+        }
+        .depRow:active { background: #222; }
+        .depBadge {
+            background: #cc0000;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .depInfo { flex: 1; }
+        .depDirection { font-size: 1rem; font-weight: bold; }
+        .depSub { font-size: 0.85rem; color: #aaa; margin-top: 2px; }
+        .depTime { font-size: 1.1rem; font-weight: bold; text-align: right; }
+        .depTime.live { color: #6bff8e; }
+        .liveIcon { font-size: 0.7rem; }
+
+        .rdHeader {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #333;
+            flex-shrink: 0;
+        }
+        .rdBack {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 0;
+        }
+        .rdBadge {
+            background: #cc0000;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .rdTitle { flex: 1; font-size: 1rem; font-weight: bold; }
+        .rdStopList { overflow-y: auto; flex: 1; padding: 4px 0; }
+
+        .rdStopRow {
+            display: flex;
+            align-items: stretch;
+            padding: 0 16px;
+            min-height: 48px;
+        }
+        .rdLine {
+            width: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .rdLineSeg { width: 2px; background: #cc0000; flex: 1; min-height: 6px; }
+        .rdLineSeg.hidden { background: transparent; }
+        .rdDot {
+            width: 12px;
+            height: 12px;
+            border: 2px solid #cc0000;
+            background: #111;
+            flex-shrink: 0;
+        }
+        .rdDot.filled { background: #cc0000; }
+        .rdDot.liveStop { background: #6bff8e; border-color: #6bff8e; width: 16px; height: 16px; }
+        .rdDot.passed { border-color: #444; background: #444; }
+        .rdStopName {
+            flex: 1;
+            padding: 12px 0 12px 12px;
+            font-size: 1rem;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        .rdStopName.passed { color: #555; }
+        .rdStopName.current { font-weight: bold; }
+        .rdStopTime {
+            font-size: 0.9rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            padding-left: 8px;
+        }
+        .rdStopTime.live { color: #6bff8e; font-weight: bold; }
+
+        #panelOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.3);
+            z-index: 3900;
+        }
+        #panelOverlay.open { display: block; }
+
+        .noDepMsg {
+            padding: 24px 16px;
+            color: #555;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="mapScreen">
+        <div id="map">
+            <div id="infoPanel">
+                <div id="infoPanelContent">Nicio cursa activa</div>
+            </div>
+        </div>
+    </div>
+
+    <button id="menuBtn" onclick="toggleMenu()">☰</button>
+
+    <div id="sideMenu">
+        <div class="menuHeader">Selecteaza Linia</div>
+        <button onclick="selectRouteFromMenu('1T.geojson','1','BIG - LEONI','15:10')">1 TUR</button>
+        <button onclick="selectRouteFromMenu('1R.geojson','1','LEONI - BIG','15:40')">1 RETUR</button>
+        <button onclick="selectRouteFromMenu('1BT.geojson','1B','BIG - CUZA VODA','18:45')">1B TUR</button>
+        <button onclick="selectRouteFromMenu('1BR.geojson','1B','CUZA VODA - BIG','20:00')">1B RETUR</button>
+        <button onclick="selectRouteFromMenu('1T.geojson','1C','BIG - LEONI','15:10')">1C TUR</button>
+        <button onclick="selectRouteFromMenu('1CR.geojson','1C','LEONI - BIG','15:40')">1C RETUR</button>
+        <button onclick="selectRouteFromMenu('3T.geojson','3','BIG - INFOEL','07:30')">3 TUR</button>
+        <button onclick="selectRouteFromMenu('3R.geojson','3','INFOEL - BIG','14:00')">3 RETUR</button>
+        <button onclick="selectRouteFromMenu('3BR.geojson','3','INFOEL - BIG','19:40')">3B RETUR</button>
+        <button onclick="selectRouteFromMenu('8T.geojson','8','BIG - SIMPOZIONULUI','16:00')">8 TUR</button>
+        <button onclick="selectRouteFromMenu('8R.geojson','8','SIMPOZIONULUI - BIG','16:20')">8 RETUR</button>
+    </div>
+
+    <div id="menuOverlay" onclick="toggleMenu()"></div>
+    <div id="panelOverlay" onclick="closePanels()"></div>
+
+    <div id="bottomPanel">
+        <div class="panelHandle">
+            <span class="panelTitle" id="panelTitle">Statia</span>
+            <button class="panelClose" onclick="closePanels()">✕</button>
+        </div>
+        <div class="panelContent" id="panelContent"></div>
+    </div>
+
+    <div id="routeDetail">
+        <div class="rdHeader">
+            <button class="rdBack" onclick="backToStopPanel()">&#8592;</button>
+            <div class="rdBadge" id="rdBadge">-</div>
+            <div class="rdTitle" id="rdTitle">-</div>
+        </div>
+        <div class="rdStopList" id="rdStopList"></div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -28,7 +248,26 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const busRef = ref(db, 'bus');
+
+        // -------------------------------------------------------
+        // MAP
+        // -------------------------------------------------------
+        const map = L.map('map', {
+            fullscreenControl: true,
+            fullscreenControlOptions: { position: 'topleft' }
+        }).setView([47.132, 24.491], 14);
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        const markerIcon = L.icon({
+            iconUrl: 'markerIcon.png',
+            iconSize: [15, 15],
+            iconAnchor: [10, 5],
+            popupAnchor: [-2, -5],
+        });
 
         const markerBus = L.icon({
             iconUrl: 'markerBus.png',
@@ -37,124 +276,347 @@
             popupAnchor: [0, -32],
         });
 
+        // -------------------------------------------------------
+        // ROUTES CONFIG
+        // -------------------------------------------------------
+        const ROUTES = [
+            {
+                id: '1', name: 'Linia 1',
+                departures: [
+                    { file: '1T.geojson',  label: 'BIG - LEONI',       time: '15:10', nextFile: '1R.geojson',  nextLabel: 'LEONI - BIG',       nextTime: '15:40' },
+                    { file: '1R.geojson',  label: 'LEONI - BIG',       time: '15:40', nextFile: null, nextLabel: null, nextTime: null },
+                ]
+            },
+            {
+                id: '1B', name: 'Linia 1B',
+                departures: [
+                    { file: '1BT.geojson', label: 'BIG - CUZA VODA',   time: '16:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG',   nextTime: '18:00' },
+                    { file: '1BR.geojson', label: 'CUZA VODA - BIG',   time: '18:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '1BT.geojson', label: 'BIG - CUZA VODA',   time: '17:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG',   nextTime: '19:00' },
+                    { file: '1BR.geojson', label: 'CUZA VODA - BIG',   time: '19:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '1BT.geojson', label: 'BIG - CUZA VODA',   time: '18:45', nextFile: '1BR.geojson', nextLabel: 'CUZA VODA - BIG',   nextTime: '20:00' },
+                    { file: '1BR.geojson', label: 'CUZA VODA - BIG',   time: '20:00', nextFile: null, nextLabel: null, nextTime: null },
+                ]
+            },
+            {
+                id: '1C', name: 'Linia 1C',
+                departures: [
+                    { file: '1T.geojson',  label: 'BIG - LEONI',       time: '15:10', nextFile: '1CR.geojson', nextLabel: 'LEONI - BIG',       nextTime: '15:40' },
+                    { file: '1CR.geojson', label: 'LEONI - BIG',       time: '15:40', nextFile: null, nextLabel: null, nextTime: null },
+                ]
+            },
+            {
+                id: '3', name: 'Linia 3',
+                departures: [
+                    { file: '3T.geojson',  label: 'BIG - INFOEL',      time: '07:30', nextFile: '3R.geojson',  nextLabel: 'INFOEL - BIG',      nextTime: '14:00' },
+                    { file: '3T.geojson',  label: 'BIG - INFOEL',      time: '19:20', nextFile: '3BR.geojson', nextLabel: 'INFOEL - BIG',      nextTime: '19:40' },
+                    { file: '3R.geojson',  label: 'INFOEL - BIG',      time: '12:30', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '3R.geojson',  label: 'INFOEL - BIG',      time: '13:00', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '3R.geojson',  label: 'INFOEL - BIG',      time: '13:30', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '3R.geojson',  label: 'INFOEL - BIG',      time: '14:00', nextFile: null, nextLabel: null, nextTime: null },
+                ]
+            },
+            {
+                id: '8', name: 'Linia 8',
+                departures: [
+                    { file: '8T.geojson',  label: 'BIG - SIMPOZIONULUI', time: '14:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '14:20' },
+                    { file: '8R.geojson',  label: 'SIMPOZIONULUI - BIG', time: '14:20', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '8T.geojson',  label: 'BIG - SIMPOZIONULUI', time: '15:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '15:20' },
+                    { file: '8R.geojson',  label: 'SIMPOZIONULUI - BIG', time: '15:20', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '8T.geojson',  label: 'BIG - SIMPOZIONULUI', time: '16:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '16:20' },
+                    { file: '8R.geojson',  label: 'SIMPOZIONULUI - BIG', time: '16:20', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '8T.geojson',  label: 'BIG - SIMPOZIONULUI', time: '17:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '17:20' },
+                    { file: '8R.geojson',  label: 'SIMPOZIONULUI - BIG', time: '17:20', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '8T.geojson',  label: 'BIG - SIMPOZIONULUI', time: '18:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '18:20' },
+                    { file: '8R.geojson',  label: 'SIMPOZIONULUI - BIG', time: '18:20', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '8T.geojson',  label: 'BIG - SIMPOZIONULUI', time: '19:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '19:20' },
+                    { file: '8R.geojson',  label: 'SIMPOZIONULUI - BIG', time: '19:20', nextFile: null, nextLabel: null, nextTime: null },
+                    { file: '8T.geojson',  label: 'BIG - SIMPOZIONULUI', time: '20:00', nextFile: '8R.geojson', nextLabel: 'SIMPOZIONULUI - BIG', nextTime: '20:20' },
+                    { file: '8R.geojson',  label: 'SIMPOZIONULUI - BIG', time: '20:20', nextFile: null, nextLabel: null, nextTime: null },
+                ]
+            },
+        ];
+
+        // -------------------------------------------------------
+        // STATE
+        // -------------------------------------------------------
+        const geojsonCache = {};
+        let liveData = null;
+        let routeLayer = null;
+        let stopMarkers = [];
         let busMarker = null;
+        let lastStopPanelName = null;
+        let lastDepForDetail = null;
 
-        // Listen for bus location updates in real time
-        onValue(busRef, (snapshot) => {
-            const data = snapshot.val();
+        // -------------------------------------------------------
+        // PRELOAD ALL GEOJSON
+        // -------------------------------------------------------
+        async function preloadAll() {
+            const files = [...new Set(ROUTES.flatMap(r => r.departures.map(d => d.file)))];
+            await Promise.all(files.map(async file => {
+                try {
+                    const res = await fetch(file);
+                    geojsonCache[file] = await res.json();
+                } catch(e) { console.warn('Could not load', file); }
+            }));
+        }
 
-            if (!data || !data.active) {
-                // Bus not running — remove marker and hide panel
+        // -------------------------------------------------------
+        // HELPERS
+        // -------------------------------------------------------
+        function calcStopTime(depTime, travelMinutes) {
+            const [h, m] = depTime.split(':').map(Number);
+            const total = h * 60 + m + (travelMinutes || 0);
+            return `${Math.floor(total/60)%24}`.padStart(2,'0') + ':' + `${total%60}`.padStart(2,'0');
+        }
+
+        function nowMins() {
+            const n = new Date();
+            return n.getHours() * 60 + n.getMinutes();
+        }
+
+        function isLiveDep(routeId, label) {
+            if (!liveData || !liveData.active || !liveData.route) return false;
+            return liveData.route.includes(routeId) && liveData.route.includes(label.split(' - ')[0]);
+        }
+
+        // -------------------------------------------------------
+        // DEPARTURES FOR A STOP
+        // -------------------------------------------------------
+        function getDepsForStop(stopName) {
+            const nm = nowMins();
+            const results = [];
+
+            ROUTES.forEach(route => {
+                route.departures.forEach(dep => {
+                    const data = geojsonCache[dep.file];
+                    if (!data) return;
+                    const stop = data.features.find(f =>
+                        f.geometry.type === 'Point' &&
+                        f.properties.name === stopName
+                    );
+                    if (!stop) return;
+
+                    const stopTime = calcStopTime(dep.time, stop.properties.travelMinutes || 0);
+                    const [sh, sm] = stopTime.split(':').map(Number);
+                    const sm2 = sh * 60 + sm;
+
+                    if (sm2 < nm || sm2 > nm + 120) return;
+
+                    results.push({
+                        routeId: route.id,
+                        routeName: route.name,
+                        label: dep.label,
+                        file: dep.file,
+                        depTime: dep.time,
+                        stopTime,
+                        isLive: isLiveDep(route.id, dep.label)
+                    });
+                });
+            });
+
+            results.sort((a, b) => a.stopTime.localeCompare(b.stopTime));
+            return results.slice(0, 8);
+        }
+
+        // -------------------------------------------------------
+        // DRAW STOPS ON MAP FOR A FILE
+        // -------------------------------------------------------
+        function drawStops(file) {
+            stopMarkers.forEach(m => map.removeLayer(m));
+            stopMarkers = [];
+            const data = geojsonCache[file];
+            if (!data) return;
+            data.features
+                .filter(f => f.geometry.type === 'Point')
+                .forEach(f => {
+                    const latlng = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
+                    const m = L.marker(latlng, { icon: markerIcon })
+                        .addTo(map)
+                        .on('click', () => showStopPanel(f.properties.name));
+                    stopMarkers.push(m);
+                });
+        }
+
+        // -------------------------------------------------------
+        // SHOW STOP PANEL
+        // -------------------------------------------------------
+        function showStopPanel(stopName) {
+            lastStopPanelName = stopName;
+            const deps = getDepsForStop(stopName);
+
+            document.getElementById('panelTitle').textContent = stopName;
+            const content = document.getElementById('panelContent');
+            content.innerHTML = '';
+
+            if (deps.length === 0) {
+                content.innerHTML = '<div class="noDepMsg">Nu exista curse in urmatoarele 2 ore.</div>';
+            } else {
+                deps.forEach(dep => {
+                    const row = document.createElement('div');
+                    row.className = 'depRow';
+                    const timeHtml = dep.isLive
+                        ? `<span class="depTime live">${dep.stopTime} <span class="liveIcon">●</span></span>`
+                        : `<span class="depTime">${dep.stopTime}</span>`;
+                    row.innerHTML = `
+                        <div class="depBadge">${dep.routeId}</div>
+                        <div class="depInfo">
+                            <div class="depDirection">${dep.label}</div>
+                            <div class="depSub">${dep.routeName}</div>
+                        </div>
+                        ${timeHtml}
+                    `;
+                    row.onclick = () => showRouteDetail(dep);
+                    content.appendChild(row);
+                });
+            }
+
+            document.getElementById('routeDetail').classList.remove('open');
+            document.getElementById('bottomPanel').classList.add('open');
+            document.getElementById('panelOverlay').classList.add('open');
+        }
+        window.showStopPanel = showStopPanel;
+
+        // -------------------------------------------------------
+        // SHOW ROUTE DETAIL
+        // -------------------------------------------------------
+        function showRouteDetail(dep) {
+            lastDepForDetail = dep;
+            const data = geojsonCache[dep.file];
+            if (!data) return;
+
+            const stops = data.features
+                .filter(f => f.geometry.type === 'Point')
+                .sort((a, b) => a.id - b.id);
+
+            // Draw route line
+            if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+            routeLayer = L.geoJSON(data, {
+                style: { color: '#cc0000', weight: 4, opacity: 1 },
+                pointToLayer: () => null
+            }).addTo(map);
+
+            // Draw stop markers for this route
+            drawStops(dep.file);
+
+            document.getElementById('rdBadge').textContent = dep.routeId;
+            document.getElementById('rdTitle').textContent = dep.label;
+
+            const list = document.getElementById('rdStopList');
+            list.innerHTML = '';
+
+            // Find live stop index
+            let liveIdx = -1;
+            if (liveData && liveData.active && liveData.route &&
+                liveData.route.includes(dep.routeId)) {
+                liveIdx = stops.findIndex(s => s.properties.name === liveData.nextStop);
+            }
+
+            stops.forEach((stop, i) => {
+                const name = stop.properties.name;
+                const time = calcStopTime(dep.depTime, stop.properties.travelMinutes || 0);
+                const isLiveStop = i === liveIdx;
+                const isPassed = liveIdx >= 0 && i < liveIdx;
+
+                const row = document.createElement('div');
+                row.className = 'rdStopRow';
+
+                const topHidden = i === 0 ? 'hidden' : '';
+                const botHidden = i === stops.length - 1 ? 'hidden' : '';
+                const dotClass = isLiveStop ? 'liveStop' : isPassed ? 'passed' : '';
+                const nameClass = isLiveStop ? 'current' : isPassed ? 'passed' : '';
+                const timeClass = isLiveStop ? 'live' : '';
+
+                row.innerHTML = `
+                    <div class="rdLine">
+                        <div class="rdLineSeg ${topHidden}"></div>
+                        <div class="rdDot ${dotClass}"></div>
+                        <div class="rdLineSeg ${botHidden}"></div>
+                    </div>
+                    <span class="rdStopName ${nameClass}">${name}</span>
+                    <span class="rdStopTime ${timeClass}">${time}</span>
+                `;
+                list.appendChild(row);
+            });
+
+            if (liveIdx > 0) {
+                setTimeout(() => {
+                    const rows = list.querySelectorAll('.rdStopRow');
+                    if (rows[liveIdx]) rows[liveIdx].scrollIntoView({ block: 'center' });
+                }, 150);
+            }
+
+            document.getElementById('bottomPanel').classList.remove('open');
+            document.getElementById('routeDetail').classList.add('open');
+        }
+        window.showRouteDetail = showRouteDetail;
+
+        // -------------------------------------------------------
+        // PANEL CONTROLS
+        // -------------------------------------------------------
+        window.closePanels = function() {
+            document.getElementById('bottomPanel').classList.remove('open');
+            document.getElementById('routeDetail').classList.remove('open');
+            document.getElementById('panelOverlay').classList.remove('open');
+        }
+
+        window.backToStopPanel = function() {
+            document.getElementById('routeDetail').classList.remove('open');
+            if (lastStopPanelName) {
+                document.getElementById('bottomPanel').classList.add('open');
+            }
+        }
+
+        window.toggleMenu = function() {
+            document.getElementById('sideMenu').classList.toggle('open');
+            document.getElementById('menuOverlay').classList.toggle('open');
+        }
+
+        window.selectRouteFromMenu = function(file, routeId, label, depTime) {
+            toggleMenu();
+            showRouteDetail({ file, routeId, label, depTime });
+        }
+
+        // -------------------------------------------------------
+        // FIREBASE
+        // -------------------------------------------------------
+        onValue(ref(db, 'bus'), (snapshot) => {
+            liveData = snapshot.val();
+
+            if (!liveData || !liveData.active) {
                 if (busMarker) { map.removeLayer(busMarker); busMarker = null; }
                 document.getElementById('infoPanelContent').innerHTML = 'Nicio cursa activa';
                 return;
             }
 
-            const latlng = [data.lat, data.lng];
-
+            const latlng = [liveData.lat, liveData.lng];
             if (!busMarker) {
-                busMarker = L.marker(latlng, { icon: markerBus }).addTo(map).bindPopup("").openPopup();
+                busMarker = L.marker(latlng, { icon: markerBus }).addTo(map).bindPopup('').openPopup();
             } else {
                 busMarker.setLatLng(latlng);
             }
 
-            // Update popup
             busMarker.getPopup().setContent(`
-                <b>Urmatoarea statie:</b> ${data.nextStop}<br>
-                <b>Programat:</b> ${data.scheduledTime}<br>
-                <b>Status:</b> ${data.status}
+                <b>Urmatoarea statie:</b> ${liveData.nextStop}<br>
+                <b>Programat:</b> ${liveData.scheduledTime}<br>
+                <b>Status:</b> ${liveData.status}
             `).update();
 
-            // Update info panel
-            const statusColor = data.status.includes('+') ? '#ff6b6b' : data.status.includes('-') ? '#6bff8e' : 'white';
+            const statusColor = liveData.status.includes('+') ? '#ff6b6b'
+                : liveData.status.includes('-') ? '#6bff8e' : 'white';
             document.getElementById('infoPanelContent').innerHTML = `
-                <b>${data.route}</b> &nbsp;|&nbsp;
-                Urmatoarea: <b>${data.nextStop}</b> la <b>${data.scheduledTime}</b> &nbsp;|&nbsp;
-                <span style="color:${statusColor}">${data.status}</span>
+                <b>${liveData.route}</b> &nbsp;|&nbsp;
+                Urmatoarea: <b>${liveData.nextStop}</b> la <b>${liveData.scheduledTime}</b> &nbsp;|&nbsp;
+                <span style="color:${statusColor}">${liveData.status}</span>
             `;
         });
+
+        // -------------------------------------------------------
+        // INIT
+        // -------------------------------------------------------
+        window.addEventListener('DOMContentLoaded', () => preloadAll());
+
     </script>
-</head>
-
-<body>
-
-    <!-- MAP (always visible) -->
-    <div id="mapScreen">
-        <div id="map">
-            <div id="infoPanel">
-                <div id="infoPanelContent">Nicio cursa activa</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- HAMBURGER BUTTON -->
-    <button id="menuBtn" onclick="toggleMenu()">☰</button>
-
-    <!-- SIDE MENU -->
-    <div id="sideMenu">
-        <div class="menuHeader">Selecteaza Linia</div>
-        <button onclick="selectRoute('1T.geojson', 'Linia 1 T')">1 TUR</button>
-        <button onclick="selectRoute('1R.geojson', 'Linia 1 R')">1 RETUR</button>
-        <button onclick="selectRoute('1BT.geojson', 'Linia 1B T')">1B TUR</button>
-        <button onclick="selectRoute('1BR.geojson', 'Linia 1B R')">1B RETUR</button>
-        <button onclick="selectRoute('1T.geojson', 'Linia 1C T')">1C TUR</button>
-        <button onclick="selectRoute('1CR.geojson', 'Linia 1C R')">1C RETUR</button>
-        <button onclick="selectRoute('3T.geojson', 'Linia 3 T')">3 TUR</button>
-        <button onclick="selectRoute('3R.geojson', 'Linia 3 R')">3 RETUR</button>
-        <button onclick="selectRoute('3BR.geojson', 'Linia 3B R')">3B RETUR</button>
-        <button onclick="selectRoute('8T.geojson', 'Linia 8 T')">8 TUR</button>
-        <button onclick="selectRoute('8R.geojson', 'Linia 8 R')">8 RETUR</button>
-    </div>
-
-    <!-- OVERLAY to close menu when clicking outside -->
-    <div id="menuOverlay" onclick="toggleMenu()"></div>
 
 </body>
-
-<script>
-    // --- Map setup ---
-    var map = L.map('map', { fullscreenControl: true, fullscreenControlOptions: { position: 'topleft' } }).setView([47.132, 24.491], 14);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
-
-    var markerIcon = L.icon({
-        iconUrl: 'markerIcon.png',
-        iconSize: [15, 15],
-        iconAnchor: [10, 5],
-        popupAnchor: [-2, -5],
-    });
-
-    let routeLayer = null;
-
-    // --- Route selection (passengers just view the route, no GPS) ---
-    function selectRoute(geojsonFile, routeName) {
-        toggleMenu(); // close menu
-        if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
-
-        fetch(geojsonFile)
-            .then(res => res.json())
-            .then(data => {
-                routeLayer = L.geoJSON(data, {
-                    style: { color: 'black', weight: 5, opacity: 1 },
-                    pointToLayer: (feature, latlng) => L.marker(latlng, { icon: markerIcon }),
-                    onEachFeature: (feature, layer) => {
-                        if (feature.geometry.type === 'Point') {
-                            layer.bindPopup(`<b>${feature.properties.name}</b><br>${feature.properties.scheduledTime}`);
-                        }
-                    }
-                }).addTo(map);
-            });
-    }
-
-    function toggleMenu() {
-        const menu = document.getElementById('sideMenu');
-        const overlay = document.getElementById('menuOverlay');
-        const isOpen = menu.classList.contains('open');
-        menu.classList.toggle('open');
-        overlay.classList.toggle('open');
-    }
-</script>
-
 </html>
