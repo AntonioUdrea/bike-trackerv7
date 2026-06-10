@@ -1,0 +1,326 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "BIG",
+                "travelMinutes": 0
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.485181,
+                    47.126893
+                ]
+            },
+            "id": 0
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Șincai",
+                "travelMinutes": 5
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.492025,
+                    47.13074
+                ]
+            },
+            "id": 1
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Dornei Pasaj VI",
+                "travelMinutes": 7
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.497941,
+                    47.134092
+                ]
+            },
+            "id": 2
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Domus",
+                "travelMinutes": 9
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.500489,
+                    47.134452
+                ]
+            },
+            "id": 3
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Școala Generală 6",
+                "travelMinutes": 11
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.505744,
+                    47.137483
+                ]
+            },
+            "id": 4
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Han",
+                "travelMinutes": 15
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.506728,
+                    47.140767
+                ]
+            },
+            "id": 5
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Cerbului",
+                "travelMinutes": 17
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.504642,
+                    47.142186
+                ]
+            },
+            "id": 6
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Lidl",
+                "travelMinutes": 20
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.497766,
+                    47.139813
+                ]
+            },
+            "id": 7
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Pasajul Decebal",
+                "travelMinutes": 24
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.49385,
+                    47.137209
+                ]
+            },
+            "id": 8
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Măgura",
+                "travelMinutes": 27
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.487534,
+                    47.132859
+                ]
+            },
+            "id": 9
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Policlinică",
+                "travelMinutes": 29
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.488667,
+                    47.131624
+                ]
+            },
+            "id": 10
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "BIG retur",
+                "travelMinutes": 35
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.485202,
+                    47.126422
+                ]
+            },
+            "id": 11
+        },
+        {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        24.485148,
+                        47.126913
+                    ],
+                    [
+                        24.487889,
+                        47.128324
+                    ],
+                    [
+                        24.491009,
+                        47.130078
+                    ],
+                    [
+                        24.491337,
+                        47.130393
+                    ],
+                    [
+                        24.493044,
+                        47.131269
+                    ],
+                    [
+                        24.494421,
+                        47.131953
+                    ],
+                    [
+                        24.498581,
+                        47.134583
+                    ],
+                    [
+                        24.499394,
+                        47.135221
+                    ],
+                    [
+                        24.500152,
+                        47.134836
+                    ],
+                    [
+                        24.500107,
+                        47.134383
+                    ],
+                    [
+                        24.500265,
+                        47.134367
+                    ],
+                    [
+                        24.502085,
+                        47.135152
+                    ],
+                    [
+                        24.504432,
+                        47.136305
+                    ],
+                    [
+                        24.506312,
+                        47.13822
+                    ],
+                    [
+                        24.50713,
+                        47.139263
+                    ],
+                    [
+                        24.507465,
+                        47.140159
+                    ],
+                    [
+                        24.507465,
+                        47.140325
+                    ],
+                    [
+                        24.506482,
+                        47.140885
+                    ],
+                    [
+                        24.506304,
+                        47.141096
+                    ],
+                    [
+                        24.504003,
+                        47.142652
+                    ],
+                    [
+                        24.503086,
+                        47.143324
+                    ],
+                    [
+                        24.502759,
+                        47.143267
+                    ],
+                    [
+                        24.499375,
+                        47.140902
+                    ],
+                    [
+                        24.495772,
+                        47.138369
+                    ],
+                    [
+                        24.493826,
+                        47.137119
+                    ],
+                    [
+                        24.489935,
+                        47.134568
+                    ],
+                    [
+                        24.487287,
+                        47.132652
+                    ],
+                    [
+                        24.489068,
+                        47.131475
+                    ],
+                    [
+                        24.490882,
+                        47.130304
+                    ],
+                    [
+                        24.4854,
+                        47.127274
+                    ],
+                    [
+                        24.485521,
+                        47.127156
+                    ],
+                    [
+                        24.484861,
+                        47.126813
+                    ],
+                    [
+                        24.485238,
+                        47.12644
+                    ]
+                ]
+            }
+        }
+    ]
+}
