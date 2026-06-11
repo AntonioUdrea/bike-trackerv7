@@ -581,10 +581,9 @@
                 busMarker.setLatLng(latlng);
             }
             busMarker.getPopup().setContent(`
-                <b>Linia:</b>${liveData.routeId}<br>
-                <b>Urmatoarea statie:</b> ${liveData.nextStop}<br>
-                <b>Programat:</b> ${liveData.scheduledTime}<br>
-                ${liveData.status} <b>minute față de grafic</b>
+                <b>Linia:</b> ${liveData.routeId}<br>
+                <b>Urmatoarea oprire:</b> ${liveData.nextStop} <b>la</b> ${liveData.scheduledTime}<br>
+                <b>${liveData.status}</b> față de grafic
             `).update();
             const statusColor = liveData.status.includes('+') ? '#ff6b6b'
                 : liveData.status.includes('-') ? '#6bff8e' : 'white';
