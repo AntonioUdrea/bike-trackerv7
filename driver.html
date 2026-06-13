@@ -127,6 +127,7 @@
         let tripStartTime = null;
         let tripDate = null;
         let stopLog = [];
+        let currentLateness = '0';
 
         function updateHeader() {
             const now = new Date();
@@ -234,10 +235,7 @@
                 list.appendChild(row);
             });
             document.getElementById('routeNumber').textContent = currentRouteId;
-            if (currentStopIndex < routeStops.length) {
-                const status = getTimeStatus(getStopScheduledTime(routeStops[currentStopIndex]));
-                document.getElementById('latenessDisplay').textContent = status.text;
-            }
+            document.getElementById('latenessDisplay').textContent = currentLateness;
         }
 
         function getTimeStatus(scheduledTime) {
@@ -297,7 +295,6 @@
             if (currentStopIndex >= routeStops.length) return;
             const nextStop = routeStops[currentStopIndex];
             const scheduledTime = getStopScheduledTime(nextStop);
-            const status = getTimeStatus(scheduledTime);
             set(busRef, {
                 active: true,
                 lat, lng,
@@ -305,7 +302,7 @@
                 route: currentRouteName,
                 nextStop: nextStop.properties.name,
                 scheduledTime,
-                status: status.text
+                status: currentLateness
             });
         }
 
@@ -338,6 +335,11 @@
                     const [sh, sm] = scheduledTime.split(':').map(Number);
                     const [ah, am] = actualTime.split(':').map(Number);
                     const diffMins = (ah * 60 + am) - (sh * 60 + sm);
+
+                    currentLateness = diffMins === 0 ? "0" :
+                                      diffMins > 0 ? `+${diffMins}'` :
+                                      `${diffMins}'`;
+
                     stopLog.push({ name: stop.properties.name, scheduled: scheduledTime, actual: actualTime, diff: diffMins });
                     currentStopIndex = i + 1;
                     if (currentStopIndex >= routeStops.length) endRoute(true);
