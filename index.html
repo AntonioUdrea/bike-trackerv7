@@ -10,37 +10,35 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.js"></script>
     <title>Map</title>
     <style>
-            #bottomPanel {
-    position: fixed;
-    bottom: -30vh;
-    left: 0;
-    width: 100%;
-    height: 30vh;
-    background: #111;
-    color: white;
-    z-index: 4000;
-    transition: bottom 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-    border-radius: 18px 18px 0 0;
-}
+        #bottomPanel {
+            position: fixed;
+            bottom: -55vh;
+            left: 0;
+            width: 100%;
+            height: 55vh;
+            background: #111;
+            color: white;
+            z-index: 4000;
+            transition: bottom 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
         #bottomPanel.open { bottom: 0; }
-       #routeDetail {
-    position: fixed;
-    bottom: -30vh;
-    left: 0;
-    width: 100%;
-    height: 30vh;
-    background: #111;
-    color: white;
-    z-index: 4100;
-    transition: bottom 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-    border-radius: 18px 18px 0 0;
-}
+        #routeDetail {
+            position: fixed;
+            bottom: -55vh;
+            left: 0;
+            width: 100%;
+            height: 55vh;
+            background: #111;
+            color: white;
+            z-index: 4100;
+            transition: bottom 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
         #routeDetail.open { bottom: 0; }
         .panelHandle {
             display: flex;
@@ -61,21 +59,26 @@
         }
         .panelContent { overflow-y: auto; flex: 1; }
         .depRow {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 16px;
-    border-bottom: 1px solid #222;
-    cursor: pointer;
-}
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #222;
+            cursor: pointer;
+        }
         .depRow:active { background: #222; }
         .depBadge {
-    background: #cc0000;
-    color: white;
-    font-size: 0.95rem;
-    font-weight: bold;
-    width: 32px;
-    height: 32px;}
+            background: #cc0000;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
         .depInfo { flex: 1; }
         .depDirection { font-size: 1rem; font-weight: bold; }
         .depSub { font-size: 0.85rem; color: #aaa; margin-top: 2px; }
@@ -113,11 +116,11 @@
         .rdTitle { flex: 1; font-size: 1rem; font-weight: bold; }
         .rdStopList { overflow-y: auto; flex: 1; padding: 4px 0; }
         .rdStopRow {
-    display: flex;
-    align-items: stretch;
-    padding: 0 16px;
-    min-height: 40px;
-}
+            display: flex;
+            align-items: stretch;
+            padding: 0 16px;
+            min-height: 48px;
+        }
         .rdLine {
             width: 24px;
             display: flex;
@@ -156,15 +159,13 @@
         }
         .rdStopTime.live { color: #6bff8e; font-weight: bold; }
         #panelOverlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: transparent;
-    z-index: 3900;
-}
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.3);
+            z-index: 3900;
+        }
         #panelOverlay.open { display: block; }
         .noDepMsg {
             padding: 24px 16px;
@@ -354,20 +355,15 @@
         }
 
         // FIX 1: Exact match on routeId and label using stored routeId from Firebase
-        function isLiveDep(routeId, dep) {
-    if (!liveData || !liveData.active) return false;
+        function isLiveDep(routeId, label) {
+            if (!liveData || !liveData.active) return false;
+            // liveData.routeId is set by driver.html (exact match)
+            // liveData.route is "LABEL TIME" e.g. "BIG - LEONI 15:10"
+            if (liveData.routeId !== routeId) return false;
+            // Check label matches start of route string
+            return liveData.route && liveData.route.startsWith(label);
+        }
 
-    const activeTrip =
-        liveData.routeId === routeId &&
-        liveData.route === `${dep.label} ${dep.time}`;
-
-    const connectedTrip =
-        dep.nextLabel &&
-        dep.nextTime &&
-        liveData.route === `${dep.label} ${dep.time}`;
-
-    return activeTrip || connectedTrip;
-}
         // FIX 2: Format time as minutes countdown if < 15 mins, else show time
         function formatDepTime(stopTime, isLive) {
             const now = new Date();
@@ -421,7 +417,7 @@
                         depTime: dep.time,
                         stopTime,
                         adjustedMins: adjustedSm2,
-                        isLive: isLiveDep(route.id, dep)
+                        isLive: isLiveDep(route.id, dep.label)
                     });
                 });
             });
@@ -500,16 +496,10 @@
 
             // FIX 1: Use exact routeId match for live stop
             let liveIdx = -1;
-            if (
-    liveData &&
-    liveData.active &&
-    liveData.routeId === dep.routeId &&
-    liveData.route === `${dep.label} ${dep.depTime}`
-) {
-    liveIdx = stops.findIndex(
-        s => s.properties.name === liveData.nextStop
-    );
-}
+            if (liveData && liveData.active && liveData.routeId === dep.routeId &&
+                liveData.route && liveData.route.startsWith(dep.label)) {
+                liveIdx = stops.findIndex(s => s.properties.name === liveData.nextStop);
+            }
 
             stops.forEach((stop, i) => {
                 const name = stop.properties.name;
