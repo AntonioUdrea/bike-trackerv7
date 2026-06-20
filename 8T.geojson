@@ -1,1 +1,169 @@
-{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"name":"BIG","travelMinutes":0},"geometry":{"coordinates":[24.485304420450262,47.12728906999024],"type":"Point"},"id":0},{"type":"Feature","properties":{"name":"Kaufland","travelMinutes":3},"geometry":{"coordinates":[24.480526943294933,47.12466194081972],"type":"Point"},"id":1},{"type":"Feature","properties":{"name":"Mere","travelMinutes":6},"geometry":{"coordinates":[24.47349184218956,47.12109887749105],"type":"Point"},"id":2},{"type":"Feature","properties":{"name":"Moșilor","travelMinutes":8},"geometry":{"coordinates":[24.473848450198517,47.11850684620026],"type":"Point"},"id":3},{"type":"Feature","properties":{"name":"Transmixt","travelMinutes":10},"geometry":{"coordinates":[24.46560736164082,47.11410169001161],"type":"Point"},"id":4},{"type":"Feature","properties":{"name":"Simpozionului","travelMinutes":15},"geometry":{"coordinates":[24.470723331698167,47.11502880085945],"type":"Point"},"id":5},{"type":"Feature","properties":{},"geometry":{"coordinates":[[24.485306789848778,47.12729123527399],[24.48509367050761,47.12719334461593],[24.484920462542846,47.127008494993845],[24.482317159753336,47.12562454734447],[24.479434853225712,47.12409335453711],[24.479190126333663,47.123820453759066],[24.477021574155913,47.12290460701783],[24.473391970251953,47.12107306612401],[24.47319596721303,47.12100082369801],[24.474674156800404,47.11989494662615],[24.474665990006912,47.11956151184293],[24.474894660218638,47.119172501955205],[24.473604306877803,47.11836112932224],[24.472196517475226,47.11749908884926],[24.471949402278995,47.11758316937079],[24.471313963203727,47.11722282334367],[24.47106684800741,47.117210811767166],[24.4658421267238,47.1137874020242],[24.469425297063708,47.11604567598127],[24.470718801288655,47.11502793828447]],"type":"LineString"}}]}
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.485304,
+                    47.127289
+                ]
+            },
+            "properties": {
+                "name": "BIG",
+                "travelMinutes": 0
+            },
+            "id": 0
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.480527,
+                    47.124662
+                ]
+            },
+            "properties": {
+                "name": "Kaufland",
+                "travelMinutes": 3
+            },
+            "id": 1
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.473492,
+                    47.121099
+                ]
+            },
+            "properties": {
+                "name": "Mere",
+                "travelMinutes": 6
+            },
+            "id": 2
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.473848,
+                    47.118507
+                ]
+            },
+            "properties": {
+                "name": "Moșilor",
+                "travelMinutes": 8
+            },
+            "id": 3
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.469421,
+                    47.116099
+                ]
+            },
+            "properties": {
+                "name": "Prodima Poarta A",
+                "travelMinutes": 10
+            },
+            "id": 5
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        24.485307,
+                        47.127291
+                    ],
+                    [
+                        24.485094,
+                        47.127193
+                    ],
+                    [
+                        24.48492,
+                        47.127008
+                    ],
+                    [
+                        24.482317,
+                        47.125625
+                    ],
+                    [
+                        24.479435,
+                        47.124093
+                    ],
+                    [
+                        24.47919,
+                        47.12382
+                    ],
+                    [
+                        24.477022,
+                        47.122905
+                    ],
+                    [
+                        24.473392,
+                        47.121073
+                    ],
+                    [
+                        24.473196,
+                        47.121001
+                    ],
+                    [
+                        24.474674,
+                        47.119895
+                    ],
+                    [
+                        24.474666,
+                        47.119562
+                    ],
+                    [
+                        24.474895,
+                        47.119173
+                    ],
+                    [
+                        24.473604,
+                        47.118361
+                    ],
+                    [
+                        24.472197,
+                        47.117499
+                    ],
+                    [
+                        24.471949,
+                        47.117583
+                    ],
+                    [
+                        24.471314,
+                        47.117223
+                    ],
+                    [
+                        24.471067,
+                        47.117211
+                    ],
+                    [
+                        24.469412,
+                        47.116075
+                    ],
+                    [
+                        24.469413,
+                        47.116075
+                    ],
+                    [
+                        24.46941,
+                        47.116074
+                    ]
+                ]
+            },
+            "properties": {}
+        }
+    ]
+}
