@@ -1,125 +1,125 @@
 {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "BIG",
-        "travelMinutes": 10
-      },
-      "geometry": {
-        "coordinates": [
-          24.485154915378786,
-          47.12688179273317
-        ],
-        "type": "Point"
-      },
-      "id": 5
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Policlinică",
-        "travelMinutes": 6
-      },
-      "geometry": {
-        "coordinates": [
-          24.488746982666157,
-          47.131710587083205
-        ],
-        "type": "Point"
-      },
-      "id": 4
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Cuza Vodă",
-        "travelMinutes": 0
-      },
-      "geometry": {
-        "coordinates": [
-          24.49138145851967,
-          47.13911385893928
-        ],
-        "type": "Point"
-      },
-      "id": 0
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "coordinates": [
-          [
-            24.491441901958467,
-            47.139068475436886
-          ],
-          [
-            24.49396251943051,
-            47.13719933238684
-          ],
-          [
-            24.49023027467655,
-            47.13479289793386
-          ],
-          [
-            24.4871766423598,
-            47.13257292595563
-          ],
-          [
-            24.488975585852927,
-            47.13150206479759
-          ],
-          [
-            24.4906085657733,
-            47.130523448634506
-          ],
-          [
-            24.491000663774685,
-            47.13021565208538
-          ],
-          [
-            24.4870394685841,
-            47.128136268733584
-          ],
-          [
-            24.4855539851784,
-            47.12736272850873
-          ]
-        ],
-        "type": "LineString"
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Pasajul Decebal",
-        "travelMinutes": 2
-      },
-      "geometry": {
-        "coordinates": [
-          24.493875403502187,
-          47.13718482089544
-        ],
-        "type": "Point"
-      },
-      "id": 1
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Măgura",
-        "travelMinutes": 2
-      },
-      "geometry": {
-        "coordinates": [
-          24.487577779883964,
-          47.132872717483906
-        ],
-        "type": "Point"
-      },
-      "id": 3
-    }
-  ]
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "BIG",
+                "travelMinutes": 10
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.485155,
+                    47.126882
+                ]
+            },
+            "id": 5
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Policlinică",
+                "travelMinutes": 6
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.488747,
+                    47.131711
+                ]
+            },
+            "id": 4
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Cuza Vodă",
+                "travelMinutes": 0
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.491381,
+                    47.139114
+                ]
+            },
+            "id": 0
+        },
+        {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+                "coordinates": [
+                    [
+                        24.491442,
+                        47.139068
+                    ],
+                    [
+                        24.493963,
+                        47.137199
+                    ],
+                    [
+                        24.49023,
+                        47.134793
+                    ],
+                    [
+                        24.487177,
+                        47.132573
+                    ],
+                    [
+                        24.488976,
+                        47.131502
+                    ],
+                    [
+                        24.490609,
+                        47.130523
+                    ],
+                    [
+                        24.491001,
+                        47.130216
+                    ],
+                    [
+                        24.487039,
+                        47.128136
+                    ],
+                    [
+                        24.485554,
+                        47.127363
+                    ]
+                ],
+                "type": "LineString"
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Pasajul Decebal",
+                "travelMinutes": 2
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.493875,
+                    47.137185
+                ]
+            },
+            "id": 1
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Măgura",
+                "travelMinutes": 4
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.487578,
+                    47.132873
+                ]
+            },
+            "id": 3
+        }
+    ]
 }
