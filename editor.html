@@ -1,0 +1,96 @@
+<head>
+<meta charset="UTF-8">
+<title>Departure Editor</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 20px;
+}
+label {
+    display: block;
+    margin-top: 10px;
+}
+input, select {
+    width: 100%;
+    padding: 6px;
+    margin-top: 4px;
+}
+button {
+    margin-top: 15px;
+    padding: 10px 20px;
+}
+textarea {
+    width: 100%;
+    height: 120px;
+    margin-top: 15px;
+    font-family: Consolas, monospace;
+}
+</style>
+</head>
+<body>
+
+<h2>Departure Editor</h2>
+
+<label>Route</label>
+<select id="route">
+    <option value="1">Linia 1</option>
+    <option value="1B">Linia 1B</option>
+    <option value="1C">Linia 1C</option>
+    <option value="3">Linia 3</option>
+    <option value="4">Linia 4</option>
+    <option value="5">Linia 5</option>
+    <option value="6">Linia 6</option>
+    <option value="8">Linia 8</option>
+</select>
+
+<label>GeoJSON File</label>
+<input id="file" placeholder="1T.geojson">
+
+<label>Label</label>
+<input id="label" placeholder="BIG - LEONI">
+
+<label>Departure Time</label>
+<input id="time" type="time">
+
+<label>Next GeoJSON File</label>
+<input id="nextFile" placeholder="1R.geojson">
+
+<label>Next Label</label>
+<input id="nextLabel" placeholder="LEONI - BIG">
+
+<label>Next Time</label>
+<input id="nextTime" type="time">
+
+<button onclick="generate()">Generate Line</button>
+
+<textarea id="output" readonly></textarea>
+
+<script>
+function generate() {
+    const file = document.getElementById('file').value.trim();
+    const label = document.getElementById('label').value.trim();
+    const time = document.getElementById('time').value;
+
+    const nextFile = document.getElementById('nextFile').value.trim();
+    const nextLabel = document.getElementById('nextLabel').value.trim();
+    const nextTime = document.getElementById('nextTime').value;
+
+    let line = `{ file: '${file}', label: '${label}', time: '${time}', `;
+
+    if (nextFile) {
+        line += `nextFile: '${nextFile}', nextLabel: '${nextLabel}', nextTime: '${nextTime}' },`;
+    } else {
+        line += `nextFile: null, nextLabel: null, nextTime: null },`;
+    }
+
+    document.getElementById('output').value =
+`Paste this into route ${document.getElementById('route').value}:
+
+${line}`;
+}
+</script>
+
+</body>
+</html>
