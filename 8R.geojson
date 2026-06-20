@@ -1,1 +1,157 @@
-{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"name":"Kaufland","travelMinutes":8},"geometry":{"coordinates":[24.480687030554975,47.124619860919864],"type":"Point"},"id":3},{"type":"Feature","properties":{"name":"Mere","travelMinutes":4},"geometry":{"coordinates":[24.473510915822033,47.12114700715156],"type":"Point"},"id":2},{"type":"Feature","properties":{"name":"Moșilor","travelMinutes":2},"geometry":{"coordinates":[24.474246074498126,47.118694696650834],"type":"Point"},"id":1},{"type":"Feature","properties":{"name":"Simpozionului","travelMinutes":0},"geometry":{"coordinates":[24.471065575182365,47.11481939969809],"type":"Point"},"id":0},{"type":"Feature","properties":{},"geometry":{"coordinates":[[24.4710525510566,47.11479705344689],[24.46923880712484,47.116055407308124],[24.47115995903286,47.11717329488846],[24.471800343002542,47.11745749985079],[24.47210661359651,47.11761854865594],[24.472287591674217,47.11752381412364],[24.47484912755192,47.11912480505521],[24.474657213361525,47.11964336692117],[24.474714053184556,47.11990707837566],[24.473241385061954,47.12097597541754],[24.477666666325092,47.12312596383018],[24.480955255959742,47.12467098315523],[24.484631809598454,47.12663547690002],[24.485052233666835,47.12688105874659],[24.485084129733593,47.126870039091386]],"type":"LineString"}},{"type":"Feature","properties":{"name":"BIG","travelMinutes":10},"geometry":{"coordinates":[24.485071294192295,47.12691590746266],"type":"Point"},"id":4}]}
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.480687,
+                    47.12462
+                ]
+            },
+            "properties": {
+                "name": "Kaufland",
+                "travelMinutes": 8
+            },
+            "id": 3
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.473511,
+                    47.121147
+                ]
+            },
+            "properties": {
+                "name": "Mere",
+                "travelMinutes": 4
+            },
+            "id": 2
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.474246,
+                    47.118695
+                ]
+            },
+            "properties": {
+                "name": "Moșilor",
+                "travelMinutes": 2
+            },
+            "id": 1
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.469449,
+                    47.116066
+                ]
+            },
+            "properties": {
+                "name": "Prodima Poarta A",
+                "travelMinutes": 0
+            },
+            "id": 0
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        24.469411,
+                        47.116054
+                    ],
+                    [
+                        24.469427,
+                        47.116065
+                    ],
+                    [
+                        24.47116,
+                        47.117173
+                    ],
+                    [
+                        24.4718,
+                        47.117457
+                    ],
+                    [
+                        24.472107,
+                        47.117619
+                    ],
+                    [
+                        24.472288,
+                        47.117524
+                    ],
+                    [
+                        24.474849,
+                        47.119125
+                    ],
+                    [
+                        24.474657,
+                        47.119643
+                    ],
+                    [
+                        24.474714,
+                        47.119907
+                    ],
+                    [
+                        24.473241,
+                        47.120976
+                    ],
+                    [
+                        24.473177,
+                        47.121038
+                    ],
+                    [
+                        24.474476,
+                        47.121893
+                    ],
+                    [
+                        24.477667,
+                        47.123126
+                    ],
+                    [
+                        24.480955,
+                        47.124671
+                    ],
+                    [
+                        24.484632,
+                        47.126635
+                    ],
+                    [
+                        24.485052,
+                        47.126881
+                    ],
+                    [
+                        24.485084,
+                        47.12687
+                    ]
+                ]
+            },
+            "properties": {}
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.485071,
+                    47.126916
+                ]
+            },
+            "properties": {
+                "name": "BIG",
+                "travelMinutes": 10
+            },
+            "id": 4
+        }
+    ]
+}
