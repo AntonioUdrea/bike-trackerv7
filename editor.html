@@ -1,46 +1,179 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Editor</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: sans-serif; background: #111; color: white; }
-        #map { flex: 1; height: 100%; }
-        #sidebar { width: 400px; background: #222; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
-        
-        /* Tabs */
-        .tabs { display: flex; margin-bottom: 15px; border-bottom: 2px solid #444; flex-shrink: 0; }
-        .tab-btn { flex: 1; padding: 10px; background: none; border: none; color: #888; cursor: pointer; font-weight: bold; font-size: 1rem; }
-        .tab-btn.active { color: white; border-bottom: 2px solid #007bff; margin-bottom: -2px; }
-        .tab-content { display: none; flex: 1; overflow-y: auto; }
-        .tab-content.active { display: block; }
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            font-family: sans-serif;
+            background: #111;
+            color: white;
+        }
 
-        h3 { margin-top: 0; font-size: 1.1rem; color: #ddd; }
-        .item-box { background: #333; padding: 12px; margin-bottom: 12px; border-radius: 5px; }
-        
-        input[type="text"], input[type="time"] { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; background: #111; border: 1px solid #444; color: white; border-radius: 4px; }
-        button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
-        button:hover { opacity: 0.8; }
-        
-        .btn-primary { background: #007bff; color: white; width: 100%; margin-bottom: 10px; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-danger { background: #dc3545; color: white; }
-        
-        .drawing-indicator { background: #ffc107; color: black; padding: 10px; border-radius: 4px; font-weight: bold; text-align: center; margin-bottom: 15px; display: none; }
-        
-        .stop-sequence-item { font-size: 0.9rem; padding: 6px 0; border-bottom: 1px solid #444; display: flex; justify-content: space-between;}
-        
-        .dep-badge { display: inline-flex; align-items: center; background: #444; padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #555; }
-        .dep-badge button { background: none; border: none; color: #ff6b6b; padding: 0 0 0 6px; margin: 0; font-size: 1rem; line-height: 1; }
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        #sidebar {
+            width: 400px;
+            background: #222;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #444;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .tab-btn.active {
+            color: white;
+            border-bottom: 2px solid #007bff;
+            margin-bottom: -2px;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: #ddd;
+        }
+
+        .item-box {
+            background: #333;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+        }
+
+        input[type="text"],
+        input[type="time"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            background: #111;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .drawing-indicator {
+            background: #ffc107;
+            color: black;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .stop-sequence-item {
+            font-size: 0.9rem;
+            padding: 6px 0;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .dep-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #444;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            border: 1px solid #555;
+        }
+
+        .dep-badge button {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            padding: 0 0 0 6px;
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1;
+        }
     </style>
 </head>
+
 <body>
 
     <div id="sidebar">
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('stops')">Stops</button>
             <button class="tab-btn" onclick="switchTab('routes')">Routes & Schedules</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 15px; flex-shrink: 0;">
+            <button class="btn-success" style="flex: 1;" onclick="exportData()">💾 Export JSON</button>
+            <button class="btn-primary" style="flex: 1; margin-bottom: 0;"
+                onclick="document.getElementById('importFile').click()">📂 Import JSON</button>
+            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
         </div>
 
         <div id="stopsTab" class="tab-content active">
@@ -50,7 +183,7 @@
 
         <div id="routesTab" class="tab-content">
             <div id="drawingModeAlert" class="drawing-indicator">
-                    DRAWING MODE ACTIVE<br>
+                DRAWING MODE ACTIVE<br>
                 <small>Click map to draw path. Click stops to add to sequence.</small>
             </div>
 
@@ -65,7 +198,8 @@
             <div id="routesList"></div>
         </div>
 
-        <button class="btn-success" style="margin-top: 15px; flex-shrink: 0;" onclick="exportData()">Export Full System JSON</button>
+        <button class="btn-success" style="margin-top: 15px; flex-shrink: 0;" onclick="exportData()">Export Full System
+            JSON</button>
     </div>
 
     <div id="map"></div>
@@ -77,12 +211,12 @@
         // --- CORE DATA STATE ---
         let stops = [];
         let routes = [];
-        let trips = []; 
-        let departures = []; 
-        
+        let trips = [];
+        let departures = [];
+
         let stopMarkers = {};
-        let mapMode = 'stops'; 
-        
+        let mapMode = 'stops';
+
         // --- DRAWING STATE ---
         let activeTripId = null;
         let tempShape = [];
@@ -93,19 +227,19 @@
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
+
             event.target.classList.add('active');
             document.getElementById(tab + 'Tab').classList.add('active');
-            
-            if(tab === 'stops' && mapMode === 'drawing_trip') cancelDrawing();
+
+            if (tab === 'stops' && mapMode === 'drawing_trip') cancelDrawing();
         }
 
         // --- MAP INTERACTION ---
-        map.on('click', function(e) {
+        map.on('click', function (e) {
             if (mapMode === 'stops') {
                 const stopName = prompt("Enter a name for this stop:");
                 if (!stopName) return;
-                
+
                 const newStop = { id: 'stop_' + Date.now(), name: stopName, lat: e.latlng.lat, lng: e.latlng.lng };
                 stops.push(newStop);
                 renderStops();
@@ -121,7 +255,7 @@
                 const travelMins = prompt(`Minutes from start to reach ${stop.name}?`, tempSequence.length === 0 ? "0" : "");
                 if (travelMins !== null) {
                     tempSequence.push({ stop_id: stop.id, travel_minutes_from_start: parseInt(travelMins) });
-                    renderRoutes(); 
+                    renderRoutes();
                 }
             }
         }
@@ -143,7 +277,7 @@
             Object.values(stopMarkers).forEach(m => map.removeLayer(m));
             stopMarkers = {};
             stops.forEach(stop => {
-                const marker = L.marker([stop.lat, stop.lng]).addTo(map).bindTooltip(stop.name, {permanent: true, direction: 'top'});
+                const marker = L.marker([stop.lat, stop.lng]).addTo(map).bindTooltip(stop.name, { permanent: true, direction: 'top' });
                 marker.on('click', () => handleStopClick(stop));
                 stopMarkers[stop.id] = marker;
             });
@@ -155,8 +289,8 @@
         function createRoute() {
             const id = document.getElementById('routeId').value;
             const name = document.getElementById('routeName').value;
-            if(!id || !name) return alert("Fill both fields");
-            
+            if (!id || !name) return alert("Fill both fields");
+
             routes.push({ route_id: id, name: name });
             document.getElementById('routeId').value = '';
             document.getElementById('routeName').value = '';
@@ -165,15 +299,15 @@
 
         function startDrawingTrip(routeId) {
             const tripName = prompt("Trip Name");
-            if(!tripName) return;
+            if (!tripName) return;
 
             mapMode = 'drawing_trip';
             activeTripId = 'trip_' + Date.now();
             tempShape = [];
             tempSequence = [];
-            
-            if(tempPolyline) map.removeLayer(tempPolyline);
-            tempPolyline = L.polyline([], {color: '#007bff', weight: 4}).addTo(map);
+
+            if (tempPolyline) map.removeLayer(tempPolyline);
+            tempPolyline = L.polyline([], { color: '#007bff', weight: 4 }).addTo(map);
 
             document.getElementById('drawingModeAlert').style.display = 'block';
             trips.push({ trip_id: activeTripId, route_id: routeId, name: tripName, shape: [], stop_sequence: [] });
@@ -181,12 +315,12 @@
         }
 
         function updateTempPolyline() {
-            if(tempPolyline) tempPolyline.setLatLngs(tempShape);
+            if (tempPolyline) tempPolyline.setLatLngs(tempShape);
         }
 
         function saveDrawing() {
             const trip = trips.find(t => t.trip_id === activeTripId);
-            if(trip) {
+            if (trip) {
                 trip.shape = [...tempShape];
                 trip.stop_sequence = [...tempSequence];
             }
@@ -194,7 +328,7 @@
         }
 
         function cancelDrawing() {
-            trips = trips.filter(t => t.trip_id !== activeTripId); 
+            trips = trips.filter(t => t.trip_id !== activeTripId);
             endDrawingMode();
         }
 
@@ -202,20 +336,20 @@
             mapMode = 'stops';
             activeTripId = null;
             document.getElementById('drawingModeAlert').style.display = 'none';
-            if(tempPolyline) map.removeLayer(tempPolyline);
+            if (tempPolyline) map.removeLayer(tempPolyline);
             renderRoutes();
-            drawTripShapes(); 
+            drawTripShapes();
         }
 
         // --- DEPARTURES LOGIC ---
         function addDeparture(tripId) {
             const timeInput = document.getElementById('time_' + tripId);
             const timeVal = timeInput.value;
-            if(!timeVal) return;
-            
+            if (!timeVal) return;
+
             departures.push({ id: 'dep_' + Date.now(), trip_id: tripId, time: timeVal });
             timeInput.value = '';
-            
+
             // Sort departures chronologically
             departures.sort((a, b) => a.time.localeCompare(b.time));
             renderRoutes();
@@ -234,11 +368,11 @@
                     <h3 style="margin-bottom: 5px;">Linia ${route.route_id}: ${route.name}</h3>
                     <button class="btn-primary" style="padding: 6px; font-size: 0.9rem;" onclick="startDrawingTrip('${route.route_id}')">+ Add Trip Path</button>
                 `;
-                
+
                 const routeTrips = trips.filter(t => t.route_id === route.route_id);
                 routeTrips.forEach(trip => {
                     const isDraft = (trip.trip_id === activeTripId);
-                    
+
                     // Render Stops
                     const sequenceHtml = (isDraft ? tempSequence : trip.stop_sequence).map(seq => {
                         const sName = stops.find(s => s.id === seq.stop_id)?.name || 'Unknown';
@@ -278,7 +412,7 @@
                         </div>
                     `;
                 });
-                
+
                 html += `</div>`;
                 list.innerHTML += html;
             });
@@ -289,8 +423,8 @@
             savedPolylines.forEach(p => map.removeLayer(p));
             savedPolylines = [];
             trips.forEach(trip => {
-                if(trip.shape.length > 0 && trip.trip_id !== activeTripId) {
-                    const line = L.polyline(trip.shape, {color: '#cc0000', weight: 3, opacity: 0.5}).addTo(map);
+                if (trip.shape.length > 0 && trip.trip_id !== activeTripId) {
+                    const line = L.polyline(trip.shape, { color: '#cc0000', weight: 3, opacity: 0.5 }).addTo(map);
                     savedPolylines.push(line);
                 }
             });
@@ -307,6 +441,45 @@
             node.click();
             node.remove();
         }
+
+        // --- JSON IMPORT ---
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // Restore the state arrays (fallback to empty arrays if missing)
+                    stops = data.stops || [];
+                    routes = data.routes || [];
+                    trips = data.trips || [];
+                    departures = data.departures || [];
+
+                    // Reset drawing states just in case
+                    activeTripId = null;
+                    if (tempPolyline) map.removeLayer(tempPolyline);
+                    document.getElementById('drawingModeAlert').style.display = 'none';
+
+                    // Re-render the UI and Map
+                    renderStops();
+                    drawMarkers();
+                    renderRoutes();
+                    drawTripShapes();
+
+                    // Reset the file input so you can import the same file again if needed
+                    document.getElementById('importFile').value = '';
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Error importing file. Make sure it is a valid JSON generated by this editor.");
+                }
+            };
+            reader.readAsText(file);
+        }
     </script>
 </body>
+
 </html>
