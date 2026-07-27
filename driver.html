@@ -1,255 +1,257 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <title>Driver</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.js"></script>
-    <title>Map</title>
-    <style>
-        #bottomPanel {
-            position: fixed;
-            bottom: -55vh;
-            left: 0;
-            width: 100%;
-            height: 55vh;
-            background: #111;
-            color: white;
-            z-index: 4000;
-            transition: bottom 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-        }
-        #bottomPanel.open { bottom: 0; }
-        #routeDetail {
-            position: fixed;
-            bottom: -55vh;
-            left: 0;
-            width: 100%;
-            height: 55vh;
-            background: #111;
-            color: white;
-            z-index: 4100;
-            transition: bottom 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-        }
-        #routeDetail.open { bottom: 0; }
-        .panelHandle {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px 8px 16px;
-            border-bottom: 1px solid #333;
-            flex-shrink: 0;
-        }
-        .panelTitle { font-size: 1.1rem; font-weight: bold; }
-        .panelClose {
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 1.4rem;
-            cursor: pointer;
-            padding: 0;
-        }
-        .panelContent { overflow-y: auto; flex: 1; }
-        .depRow {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            border-bottom: 1px solid #222;
-            cursor: pointer;
-        }
-        .depRow:active { background: #222; }
-        .depBadge {
-            background: #cc0000;
-            color: white;
-            font-size: 1.1rem;
-            font-weight: bold;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .depInfo { flex: 1; }
-        .depDirection { font-size: 1rem; font-weight: bold; }
-        .depSub { font-size: 0.85rem; color: #aaa; margin-top: 2px; }
-        .depTime { font-size: 1.1rem; font-weight: bold; text-align: right; }
-        .depTime.live { color: #6bff8e; }
-        .liveIcon { font-size: 0.7rem; }
-        .rdHeader {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-bottom: 1px solid #333;
-            flex-shrink: 0;
-        }
-        .rdBack {
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 1.4rem;
-            cursor: pointer;
-            padding: 0;
-        }
-        .rdBadge {
-            background: #cc0000;
-            color: white;
-            font-size: 1.1rem;
-            font-weight: bold;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .rdTitle { flex: 1; font-size: 1rem; font-weight: bold; }
-        .rdStopList { overflow-y: auto; flex: 1; padding: 4px 0; }
-        .rdStopRow {
-            display: flex;
-            align-items: stretch;
-            padding: 0 16px;
-            min-height: 48px;
-        }
-        .rdLine {
-            width: 24px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex-shrink: 0;
-        }
-        .rdLineSeg { width: 2px; background: #cc0000; flex: 1; min-height: 6px; }
-        .rdLineSeg.hidden { background: transparent; }
-        .rdDot {
-            width: 12px;
-            height: 12px;
-            border: 2px solid #cc0000;
-            background: #111;
-            flex-shrink: 0;
-        }
-        .rdDot.filled { background: #cc0000; }
-        .rdDot.liveStop { background: #6bff8e; border-color: #6bff8e; width: 16px; height: 16px; }
-        .rdDot.passed { border-color: #444; background: #444; }
-        .rdStopName {
-            flex: 1;
-            padding: 12px 0 12px 12px;
-            font-size: 1rem;
-            color: white;
-            display: flex;
-            align-items: center;
-        }
-        .rdStopName.passed { color: #555; }
-        .rdStopName.current { font-weight: bold; }
-        .rdStopTime {
-            font-size: 0.9rem;
-            color: #aaa;
-            display: flex;
-            align-items: center;
-            padding-left: 8px;
-        }
-        .rdStopTime.live { color: #6bff8e; font-weight: bold; }
-        #panelOverlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.3);
-            z-index: 3900;
-        }
-        #panelOverlay.open { display: block; }
-        .noDepMsg {
-            padding: 24px 16px;
-            color: #555;
-            text-align: center;
-            font-size: 0.95rem;
-        }
-    </style>
-</head>
-<body>
-    <div id="mapScreen">
-        <div id="map">
-            <div id="infoPanel">
-                <div id="infoPanelContent">Nicio cursa activa</div>
-            </div>
-        </div>
-    </div>
-    <button id="menuBtn" onclick="toggleMenu()">☰</button>
-    <div id="sideMenu">
-        <div class="menuHeader">Selecteaza Linia</div>
-        <button onclick="selectRouteFromMenu('1T.geojson','1','BIG - LEONI','15:10')">1 TUR</button>
-        <button onclick="selectRouteFromMenu('1R.geojson','1','LEONI - BIG','15:40')">1 RETUR</button>
-        <button onclick="selectRouteFromMenu('1BT.geojson','1B','BIG - CUZA VODA','18:45')">1B TUR</button>
-        <button onclick="selectRouteFromMenu('1BR.geojson','1B','CUZA VODA - BIG','20:00')">1B RETUR</button>
-        <button onclick="selectRouteFromMenu('1T.geojson','1C','BIG - LEONI','15:10')">1C TUR</button>
-        <button onclick="selectRouteFromMenu('1CR.geojson','1C','LEONI - BIG','15:40')">1C RETUR</button>
-        <button onclick="selectRouteFromMenu('3T.geojson','3','BIG - INFOEL','07:30')">3 TUR</button>
-        <button onclick="selectRouteFromMenu('3R.geojson','3','INFOEL - BIG','14:00')">3 RETUR</button>
-        <button onclick="selectRouteFromMenu('4.geojson','4','BIG - Centru - Han - Decebal - BIG','09:05')">Linia 4</button>
-        <button onclick="selectRouteFromMenu('5.geojson','5','BIG - Garii - Leoni - Compozitorilor - BIG','09:05')">Linia 5</button>
-        <button onclick="selectRouteFromMenu('6.geojson','6','BIG - Parcului - Codrisor - Zavoaie - BIG','09:05')">Linia 6</button>
-        <button onclick="selectRouteFromMenu('8T.geojson','8','BIG - SIMPOZIONULUI','16:00')">8 TUR</button>
-        <button onclick="selectRouteFromMenu('8R.geojson','8','SIMPOZIONULUI - BIG','16:20')">8 RETUR</button>
-    </div>
-    <div id="menuOverlay" onclick="toggleMenu()"></div>
-    <div id="panelOverlay" onclick="closePanels()"></div>
-    <div id="bottomPanel">
-        <div class="panelHandle">
-            <span class="panelTitle" id="panelTitle">Statia</span>
-            <button class="panelClose" onclick="closePanels()">✕</button>
-        </div>
-        <div class="panelContent" id="panelContent"></div>
-    </div>
-    <div id="routeDetail">
-        <div class="rdHeader">
-            <button class="rdBack" onclick="backToStopPanel()">&#8592;</button>
-            <div class="rdBadge" id="rdBadge">-</div>
-            <div class="rdTitle" id="rdTitle">-</div>
-        </div>
-        <div class="rdStopList" id="rdStopList"></div>
-    </div>
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-    
+    import { getDatabase, ref, set, push, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
     const firebaseConfig = {
         apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
         authDomain: "bike-trackerv7.firebaseapp.com",
         databaseURL: "https://bike-trackerv7-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "bike-trackerv7"
+        projectId: "bike-trackerv7",
+        storageBucket: "bike-trackerv7.firebasestorage.app",
+        messagingSenderId: "829142915200",
+        appId: "1:829142915200:web:cd37f3234ecb850421ae65"
     };
+
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const busRef = ref(db, 'bus');
+    onDisconnect(busRef).set({ active: false });
 
-    const map = L.map('map', { fullscreenControl: true, fullscreenControlOptions: { position: 'topleft' } }).setView([47.132, 24.491], 14);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    const markerIcon = L.icon({ iconUrl: 'markerIcon.png', iconSize: [15, 15], iconAnchor: [10, 5], popupAnchor: [-2, -5] });
-    const markerBus = L.icon({ iconUrl: 'markerBus.png', iconSize: [75, 65], iconAnchor: [35, 32], popupAnchor: [0, -32] });
-
+    // NEW: Master Data State
     let masterData = { stops: [], routes: [], trips: [], departures: [] };
-    let liveData = null;
-    let routeLayer = null;
-    let stopMarkers = [];
-    let busMarker = null;
-    let lastStopPanelName = null;
 
-    // Add 'get' to your imports at the top:
-// import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    let watchId = null;
+    let timerInterval = null;
+    let routeStops = [];
+    let currentStopIndex = 0;
+    let currentRouteName = '';
+    let currentRouteId = '';
+    let departureTime = '00:00';
+    let wakeLock = null;
+    let tripTrack = [];
+    let totalDistance = 0;
+    let tripStartTime = null;
+    let tripDate = null;
+    let stopLog = [];
+    let currentLateness = '0';
 
-async function initSystem() {
+    function updateHeader() {
+        const now = new Date();
+        const months = ['ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'];
+        const text = `${now.getDate()} ${months[now.getMonth()]}, ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        if (document.getElementById('headerDate')) document.getElementById('headerDate').textContent = text;
+        if (document.getElementById('headerDate2')) document.getElementById('headerDate2').textContent = text;
+    }
+    setInterval(updateHeader, 1000);
+    updateHeader();
+
+    window.showRouteList = function () {
+        const list = document.getElementById('routeList');
+        list.innerHTML = '';
+        masterData.routes.forEach(route => {
+            const btn = document.createElement('button');
+            btn.textContent = `Linia ${route.route_id}: ${route.name}`;
+            btn.onclick = () => showDepartures(route.route_id);
+            list.appendChild(btn);
+        });
+        document.getElementById('screen1').style.display = 'flex';
+        document.getElementById('screen2').style.display = 'none';
+        document.getElementById('driverScreen').style.display = 'none';
+    }
+
+    window.showDepartures = function (routeId) {
+        const route = masterData.routes.find(r => r.route_id === routeId);
+        if (!route) return;
+        
+        const list = document.getElementById('departureList');
+        list.innerHTML = '';
+        document.getElementById('screen2Title').textContent = route.name;
+        
+        const routeTrips = masterData.trips.filter(t => t.route_id === routeId);
+        let allDepartures = [];
+        
+        routeTrips.forEach(trip => {
+            const deps = masterData.departures.filter(d => d.trip_id === trip.trip_id);
+            deps.forEach(d => {
+                allDepartures.push({ trip, time: d.time });
+            });
+        });
+
+        allDepartures.sort((a, b) => a.time.localeCompare(b.time));
+
+        allDepartures.forEach(dep => {
+            const btn = document.createElement('button');
+            btn.innerHTML = `<span class="depTime">${dep.time}</span><span class="depLabel">${dep.trip.name}</span>`;
+            btn.onclick = () => selectRoute(dep.trip, dep.time, routeId);
+            list.appendChild(btn);
+        });
+
+        document.getElementById('screen1').style.display = 'none';
+        document.getElementById('screen2').style.display = 'flex';
+    }
+
+    window.selectRoute = function (trip, depTime, routeId) {
+        currentRouteName = `${trip.name} ${depTime}`;
+        currentRouteId = routeId;
+        departureTime = depTime;
+        
+        tripTrack = [];
+        totalDistance = 0;
+        tripStartTime = null;
+        tripDate = new Date().toISOString().slice(0, 10);
+        stopLog = [];
+        
+        document.getElementById('screen2').style.display = 'none';
+        document.getElementById('driverScreen').style.display = 'flex';
+        document.querySelector('.leftPanel').style.display = 'flex';
+
+        // Map internal sequence format to the structure checkStop expects
+        routeStops = trip.stop_sequence.map(seq => {
+            const stopData = masterData.stops.find(s => s.id === seq.stop_id);
+            return {
+                properties: { name: stopData.name, travelMinutes: seq.travel_minutes_from_start },
+                geometry: { coordinates: [stopData.lng, stopData.lat] } // GeoJSON legacy format for distance calc
+            };
+        });
+
+        currentStopIndex = 0;
+        renderStops();
+        startTracking();
+    }
+
+    function getStopScheduledTime(stop) {
+        const [h, m] = departureTime.split(':').map(Number);
+        const total = (h * 60 + m) + (stop.properties.travelMinutes || 0);
+        return `${Math.floor(total / 60) % 24}`.padStart(2, '0') + ':' + `${total % 60}`.padStart(2, '0');
+    }
+
+    function renderStops() {
+        const list = document.getElementById('stopList');
+        list.innerHTML = '';
+        const visible = routeStops.slice(currentStopIndex, currentStopIndex + 4);
+        visible.forEach((stop, i) => {
+            const scheduledTime = getStopScheduledTime(stop);
+            const row = document.createElement('div');
+            row.className = 'stopRow' + (i === 0 ? ' nextStop' : '');
+            row.innerHTML = `<span class="stopIndex">${currentStopIndex + i + 1}.</span><span class="stopName">${stop.properties.name}</span><span class="stopTime">${scheduledTime}</span>`;
+            list.appendChild(row);
+        });
+        document.getElementById('routeNumber').textContent = currentRouteId;
+        document.getElementById('latenessDisplay').textContent = currentLateness;
+    }
+
+    async function requestWakeLock() {
+        if ('wakeLock' in navigator) {
+            try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+        }
+    }
+
+    function startTracking() {
+        if (!navigator.geolocation) return;
+        requestWakeLock();
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                const timeStr = new Date().toTimeString().slice(0, 8);
+                if (!tripStartTime) tripStartTime = timeStr;
+                if (tripTrack.length > 0) {
+                    const prev = tripTrack[tripTrack.length - 1];
+                    totalDistance += getDistance([prev.lat, prev.lng], [latitude, longitude]);
+                }
+                tripTrack.push({ lat: latitude, lng: longitude, t: timeStr });
+                checkStop([latitude, longitude]);
+                pushToFirebase(latitude, longitude);
+                renderStops();
+            },
+            (err) => console.error(err),
+            { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+        );
+        timerInterval = setInterval(() => renderStops(), 5000);
+    }
+
+    function pushToFirebase(lat, lng) {
+        if (currentStopIndex >= routeStops.length) return;
+        const nextStop = routeStops[currentStopIndex];
+        set(busRef, {
+            active: true, lat, lng,
+            routeId: currentRouteId,
+            route: currentRouteName,
+            nextStop: nextStop.properties.name,
+            scheduledTime: getStopScheduledTime(nextStop),
+            status: currentLateness
+        });
+    }
+
+    function saveTrip() {
+        if (tripTrack.length < 2) return;
+        const tripKey = `${tripDate}_${currentRouteId}_${departureTime.replace(':', '')}`;
+        set(ref(db, `trips/${tripKey}`), {
+            routeName: currentRouteName, routeId: currentRouteId, date: tripDate,
+            departureTime, startTime: tripStartTime, endTime: new Date().toTimeString().slice(0, 8),
+            distanceKm: (totalDistance / 1000).toFixed(2), track: tripTrack, stops: stopLog
+        });
+    }
+
+    function checkStop(latlng) {
+        if (currentStopIndex >= routeStops.length) return;
+        for (let i = currentStopIndex; i < routeStops.length; i++) {
+            const stopLatLng = [routeStops[i].geometry.coordinates[1], routeStops[i].geometry.coordinates[0]];
+            if (getDistance(latlng, stopLatLng) <= 30) {
+                const actualTime = new Date().toTimeString().slice(0, 5);
+                const scheduledTime = getStopScheduledTime(routeStops[i]);
+                const [sh, sm] = scheduledTime.split(':').map(Number);
+                const [ah, am] = actualTime.split(':').map(Number);
+                const diffMins = (ah * 60 + am) - (sh * 60 + sm);
+
+                currentLateness = diffMins === 0 ? "0" : diffMins > 0 ? `+${diffMins}'` : `${diffMins}'`;
+                stopLog.push({ name: routeStops[i].properties.name, scheduled: scheduledTime, actual: actualTime, diff: diffMins });
+                
+                currentStopIndex = i + 1;
+                if (currentStopIndex >= routeStops.length) endRoute(true);
+                return;
+            }
+        }
+    }
+
+    function getDistance([lat1, lng1], [lat2, lng2]) {
+        const R = 6371000, dLat = (lat2 - lat1) * Math.PI / 180, dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function stopAllTracking() {
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        if (timerInterval !== null) clearInterval(timerInterval);
+        if (wakeLock !== null) wakeLock.release();
+    }
+
+    window.endRoute = function () {
+        saveTrip();
+        stopAllTracking();
+        set(busRef, { active: false });
+        document.querySelector('.leftPanel').style.display = 'none';
+        document.getElementById('driverScreen').style.display = 'none';
+        showRouteList();
+    }
+
+    window.toggleFullscreen = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    window.addEventListener("beforeunload", () => set(busRef, { active: false }));
+
+    // Add 'get' to your imports at the top of the file:
+// import { getDatabase, ref, set, push, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+window.addEventListener('DOMContentLoaded', async () => {
     try {
         const snapshot = await get(ref(db, 'master_transit_data'));
         if (snapshot.exists()) {
             masterData = snapshot.val();
+            // Fallback for empty arrays if the DB node exists but has no arrays yet
             masterData.stops = masterData.stops || [];
             masterData.routes = masterData.routes || [];
             masterData.trips = masterData.trips || [];
@@ -257,191 +259,51 @@ async function initSystem() {
         }
         
         // Render the UI once data is loaded
-        buildMenu();
-        drawGlobalStops();
+        showRouteList();
         
-    } catch(e) { 
-        console.error('Error loading master data:', e); 
+    } catch (e) {
+        console.error("Failed to load cloud data:", e);
+        document.getElementById('routeList').innerHTML = 'Error loading routes from Firebase.';
     }
-}
-
-    function buildMenu() {
-        const menu = document.getElementById('sideMenu');
-        menu.innerHTML = '<div class="menuHeader">Selecteaza Linia</div>';
-        masterData.routes.forEach(route => {
-            const trips = masterData.trips.filter(t => t.route_id === route.route_id);
-            trips.forEach(trip => {
-                const btn = document.createElement('button');
-                btn.textContent = `Linia ${route.route_id} ${trip.name}`;
-                btn.onclick = () => { toggleMenu(); showRouteDetail(trip); };
-                menu.appendChild(btn);
-            });
-        });
-    }
-
-    function calcStopTime(depTime, travelMinutes) {
-        const [h, m] = depTime.split(':').map(Number);
-        const total = h * 60 + m + (travelMinutes || 0);
-        return `${Math.floor(total/60)%24}`.padStart(2,'0') + ':' + `${total%60}`.padStart(2,'0');
-    }
-
-    function nowMins() {
-        const n = new Date(); return n.getHours() * 60 + n.getMinutes();
-    }
-
-    function formatDepTime(stopTime, isLive) {
-        const now = new Date();
-        const [sh, sm] = stopTime.split(':').map(Number);
-        const scheduled = new Date(); scheduled.setHours(sh, sm, 0, 0);
-        
-        let diffMins = Math.round((scheduled - now) / 60000);
-        if (diffMins < -720) diffMins += 1440; 
-        if (diffMins < 0) diffMins = 0;
-
-        const timeText = diffMins === 0 ? 'acum' : diffMins < 15 ? `${diffMins} min` : stopTime;
-        return isLive ? `<span class="depTime live">${timeText} <span class="liveIcon">●</span></span>` 
-                      : `<span class="depTime">${timeText}</span>`;
-    }
-
-    function drawGlobalStops() {
-        stopMarkers.forEach(m => map.removeLayer(m));
-        stopMarkers = [];
-        masterData.stops.forEach(stop => {
-            const m = L.marker([stop.lat, stop.lng], { icon: markerIcon })
-                       .addTo(map)
-                       .on('click', () => showStopPanel(stop));
-            stopMarkers.push(m);
-        });
-    }
-
-    function showStopPanel(stop) {
-        lastStopPanelName = stop;
-        document.getElementById('panelTitle').textContent = stop.name;
-        
-        const nm = nowMins();
-        const results = [];
-        
-        masterData.trips.forEach(trip => {
-            const seqMatch = trip.stop_sequence.find(s => s.stop_id === stop.id);
-            if (!seqMatch) return;
-            
-            const route = masterData.routes.find(r => r.route_id === trip.route_id);
-            const deps = masterData.departures.filter(d => d.trip_id === trip.trip_id);
-            
-            deps.forEach(dep => {
-                const stopTime = calcStopTime(dep.time, seqMatch.travel_minutes_from_start);
-                const [sh, sm] = stopTime.split(':').map(Number);
-                let sm2 = sh * 60 + sm;
-                if (sm2 < nm) sm2 += 1440; 
-                if (sm2 - nm > 1440) return; 
-
-                const isLive = liveData?.active && liveData.routeId === route.route_id && liveData.route.includes(trip.name);
-                results.push({ trip, route, stopTime, adjustedMins: sm2, isLive });
-            });
-        });
-
-        results.sort((a, b) => a.adjustedMins - b.adjustedMins);
-        
-        const content = document.getElementById('panelContent');
-        content.innerHTML = results.length === 0 ? '<div class="noDepMsg">Nu exista curse in urmatoarele 24 ore.</div>' : '';
-        
-        results.slice(0, 10).forEach(res => {
-            const row = document.createElement('div');
-            row.className = 'depRow';
-            row.innerHTML = `
-                <div class="depBadge">${res.route.route_id}</div>
-                <div class="depInfo">
-                    <div class="depDirection">${res.trip.name}</div>
-                    <div class="depSub">${res.route.name}</div>
-                </div>
-                ${formatDepTime(res.stopTime, res.isLive)}
-            `;
-            row.onclick = () => showRouteDetail(res.trip);
-            content.appendChild(row);
-        });
-
-        document.getElementById('routeDetail').classList.remove('open');
-        document.getElementById('bottomPanel').classList.add('open');
-        document.getElementById('panelOverlay').classList.add('open');
-    }
-
-    function showRouteDetail(trip) {
-        const route = masterData.routes.find(r => r.route_id === trip.route_id);
-        
-        if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
-        if (trip.shape && trip.shape.length > 0) {
-            routeLayer = L.polyline(trip.shape, { color: '#cc0000', weight: 4, opacity: 1 }).addTo(map);
-        }
-
-        document.getElementById('rdBadge').textContent = route.route_id;
-        document.getElementById('rdTitle').textContent = trip.name;
-
-        const list = document.getElementById('rdStopList');
-        list.innerHTML = '';
-
-        let liveIdx = -1;
-        if (liveData?.active && liveData.routeId === route.route_id && liveData.route.includes(trip.name)) {
-            liveIdx = trip.stop_sequence.findIndex(s => {
-                const st = masterData.stops.find(x => x.id === s.stop_id);
-                return st && st.name === liveData.nextStop;
-            });
-        }
-
-        // Get the first departure time to calculate schedule (or default to current time for preview)
-        const deps = masterData.departures.filter(d => d.trip_id === trip.trip_id).sort((a,b) => a.time.localeCompare(b.time));
-        const baseTime = deps.length > 0 ? deps[0].time : '00:00';
-
-        trip.stop_sequence.forEach((seq, i) => {
-            const stopData = masterData.stops.find(s => s.id === seq.stop_id);
-            if (!stopData) return;
-            
-            const time = calcStopTime(baseTime, seq.travel_minutes_from_start);
-            const isLiveStop = i === liveIdx;
-            const isPassed = liveIdx >= 0 && i < liveIdx;
-            
-            const row = document.createElement('div');
-            row.className = 'rdStopRow';
-            row.innerHTML = `
-                <div class="rdLine">
-                    <div class="rdLineSeg ${i===0 ? 'hidden':''}"></div>
-                    <div class="rdDot ${isLiveStop ? 'liveStop' : isPassed ? 'passed' : ''}"></div>
-                    <div class="rdLineSeg ${i===trip.stop_sequence.length-1 ? 'hidden':''}"></div>
-                </div>
-                <span class="rdStopName ${isLiveStop ? 'current' : isPassed ? 'passed' : ''}">${stopData.name}</span>
-                <span class="rdStopTime ${isLiveStop ? 'live' : ''}">${time}</span>
-            `;
-            list.appendChild(row);
-        });
-
-        if (liveIdx > 0) setTimeout(() => list.querySelectorAll('.rdStopRow')[liveIdx]?.scrollIntoView({ block: 'center' }), 150);
-
-        document.getElementById('bottomPanel').classList.remove('open');
-        document.getElementById('routeDetail').classList.add('open');
-    }
-
-    // Panel & Menu UI Toggles
-    window.closePanels = () => { document.getElementById('bottomPanel').classList.remove('open'); document.getElementById('routeDetail').classList.remove('open'); document.getElementById('panelOverlay').classList.remove('open'); }
-    window.backToStopPanel = () => { document.getElementById('routeDetail').classList.remove('open'); if (lastStopPanelName) document.getElementById('bottomPanel').classList.add('open'); }
-    window.toggleMenu = () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
-
-    // Firebase Listener
-    onValue(ref(db, 'bus'), (snapshot) => {
-        liveData = snapshot.val();
-        if (!liveData?.active) {
-            if (busMarker) { map.removeLayer(busMarker); busMarker = null; }
-            document.getElementById('infoPanelContent').innerHTML = 'Nicio cursa activa';
-            return;
-        }
-        
-        const latlng = [liveData.lat, liveData.lng];
-        if (!busMarker) busMarker = L.marker(latlng, { icon: markerBus }).addTo(map).bindPopup('').openPopup();
-        else busMarker.setLatLng(latlng);
-        
-        busMarker.getPopup().setContent(`<b>Vehicul:</b> BN 29 TCB<br><b>Linia:</b> ${liveData.routeId}<br><b>Urmatoarea oprire:</b> ${liveData.nextStop} <b>la</b> ${liveData.scheduledTime}<br><b>${liveData.status}</b> față de grafic`).update();
-        document.getElementById('infoPanelContent').innerHTML = `<b>${liveData.route}</b> &nbsp;|&nbsp; Urmatoarea: <b>${liveData.nextStop}</b> la <b>${liveData.scheduledTime}</b> &nbsp;|&nbsp; <span style="color:${liveData.status.includes('+') ? '#ff6b6b' : liveData.status.includes('-') ? '#6bff8e' : 'white'}">${liveData.status}</span>`;
-    });
-
-    window.addEventListener('DOMContentLoaded', initSystem);
+});
 </script>
+</head>
+
+<body>
+    <div id="screen1" class="driverRouteScreen">
+        <div class="driverHeader">
+            <div class="headerDate" id="headerDate">--</div>
+            <div class="headerStatus">✓ 3G &nbsp; ✓ GPS 1/1</div>
+        </div>
+        <div id="routeList" class="selectionList"></div>
+    </div>
+    <div id="screen2" class="driverRouteScreen" style="display:none;">
+        <div class="driverHeader">
+            <button class="backBtn" onclick="showRouteList()">&#8592;</button>
+            <div class="headerDate" id="screen2Title">--</div>
+            <div class="headerStatus">✓ 3G &nbsp; ✓ GPS 1/1</div>
+        </div>
+        <div id="departureList" class="selectionList"></div>
+    </div>
+    <div id="driverScreen" class="driverDisplay" style="display:none;">
+        <div class="driverHeader">
+            <div class="headerDate" id="headerDate2">--</div>
+            <div class="headerStatus">✓ 3G &nbsp; ✓ GPS 1/1</div>
+        </div>
+        <div class="driverTop">
+            <div class="leftPanel">
+                <div class="routeBox">
+                    <div id="routeNumber">-</div>
+                </div>
+                <div id="latenessDisplay" class="latenessDisplay"></div>
+            </div>
+            <div id="stopList" class="stopList"></div>
+        </div>
+        <div class="driverBottom">
+            <button class="endRouteBtn" onclick="endRoute()">&#9632;</button>
+            <button class="fullscreenBtn" onclick="toggleFullscreen()">&#x26F6;</button>
+            <div class="plateBox">BN 29 TCB</div>
+        </div>
+    </div>
 </body>
 </html>
