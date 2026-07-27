@@ -1,179 +1,48 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Editor</title>
+    <title>Transit Editor - Cloud Sync</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            height: 100vh;
-            font-family: sans-serif;
-            background: #111;
-            color: white;
-        }
+        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: sans-serif; background: #111; color: white; }
+        #map { flex: 1; height: 100%; }
+        #sidebar { width: 420px; background: #222; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
+        
+        .tabs { display: flex; margin-bottom: 15px; border-bottom: 2px solid #444; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 10px; background: none; border: none; color: #888; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .tab-btn.active { color: white; border-bottom: 2px solid #007bff; margin-bottom: -2px; }
+        .tab-content { display: none; flex: 1; overflow-y: auto; }
+        .tab-content.active { display: block; }
 
-        #map {
-            flex: 1;
-            height: 100%;
-        }
+        h3 { margin-top: 0; font-size: 1.1rem; color: #ddd; }
+        .item-box { background: #333; padding: 12px; margin-bottom: 12px; border-radius: 5px; }
+        
+        input[type="text"], input[type="time"] { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; background: #111; border: 1px solid #444; color: white; border-radius: 4px; }
+        button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        button:hover { opacity: 0.8; }
+        
+        .btn-primary { background: #007bff; color: white; width: 100%; margin-bottom: 10px; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        
+        .drawing-indicator { background: #ffc107; color: black; padding: 10px; border-radius: 4px; font-weight: bold; text-align: center; margin-bottom: 15px; display: none; }
+        .stop-sequence-item { font-size: 0.9rem; padding: 6px 0; border-bottom: 1px solid #444; display: flex; justify-content: space-between;}
+        .dep-badge { display: inline-flex; align-items: center; background: #444; padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #555; }
+        .dep-badge button { background: none; border: none; color: #ff6b6b; padding: 0 0 0 6px; margin: 0; font-size: 1rem; line-height: 1; }
 
-        #sidebar {
-            width: 400px;
-            background: #222;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #444;
-            flex-shrink: 0;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            background: none;
-            border: none;
-            color: #888;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1rem;
-        }
-
-        .tab-btn.active {
-            color: white;
-            border-bottom: 2px solid #007bff;
-            margin-bottom: -2px;
-        }
-
-        .tab-content {
-            display: none;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        h3 {
-            margin-top: 0;
-            font-size: 1.1rem;
-            color: #ddd;
-        }
-
-        .item-box {
-            background: #333;
-            padding: 12px;
-            margin-bottom: 12px;
-            border-radius: 5px;
-        }
-
-        input[type="text"],
-        input[type="time"] {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-            background: #111;
-            border: 1px solid #444;
-            color: white;
-            border-radius: 4px;
-        }
-
-        button {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: opacity 0.2s;
-        }
-
-        button:hover {
-            opacity: 0.8;
-        }
-
-        .btn-primary {
-            background: #007bff;
-            color: white;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .drawing-indicator {
-            background: #ffc107;
-            color: black;
-            padding: 10px;
-            border-radius: 4px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .stop-sequence-item {
-            font-size: 0.9rem;
-            padding: 6px 0;
-            border-bottom: 1px solid #444;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .dep-badge {
-            display: inline-flex;
-            align-items: center;
-            background: #444;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            border: 1px solid #555;
-        }
-
-        .dep-badge button {
-            background: none;
-            border: none;
-            color: #ff6b6b;
-            padding: 0 0 0 6px;
-            margin: 0;
-            font-size: 1rem;
-            line-height: 1;
-        }
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; }
     </style>
 </head>
-
 <body>
+
+    <div id="loadingOverlay">Loading Cloud Data...</div>
 
     <div id="sidebar">
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('stops')">Stops</button>
-            <button class="tab-btn" onclick="switchTab('routes')">Routes & Schedules</button>
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-top: 15px; flex-shrink: 0;">
-            <button class="btn-success" style="flex: 1;" onclick="exportData()">💾 Export JSON</button>
-            <button class="btn-primary" style="flex: 1; margin-bottom: 0;"
-                onclick="document.getElementById('importFile').click()">📂 Import JSON</button>
-            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+            <button class="tab-btn active" onclick="switchTab('stops')">📍 Stops</button>
+            <button class="tab-btn" onclick="switchTab('routes')">🚌 Routes & Trips</button>
         </div>
 
         <div id="stopsTab" class="tab-content active">
@@ -183,70 +52,117 @@
 
         <div id="routesTab" class="tab-content">
             <div id="drawingModeAlert" class="drawing-indicator">
-                DRAWING MODE ACTIVE<br>
-                <small>Click map to draw path. Click stops to add to sequence.</small>
+                ✏️ DRAWING MODE ACTIVE<br><small>Click map to draw path. Click stops to add to sequence.</small>
             </div>
-
             <div id="routeManager">
                 <h3>Create New Route</h3>
-                <input type="text" id="routeId" placeholder="Route Short Name">
-                <input type="text" id="routeName" placeholder="Route Long Name">
+                <input type="text" id="routeId" placeholder="Route ID (e.g., 1, 1B)">
+                <input type="text" id="routeName" placeholder="Route Name (e.g., BIG - LEONI)">
                 <button class="btn-primary" onclick="createRoute()">Add Route</button>
             </div>
-
             <hr style="border-color: #444; margin: 15px 0;">
             <div id="routesList"></div>
         </div>
 
-        <button class="btn-success" style="margin-top: 15px; flex-shrink: 0;" onclick="exportData()">Export Full System
-            JSON</button>
+        <div style="display: flex; gap: 10px; margin-top: 15px; flex-shrink: 0; flex-direction: column;">
+            <button class="btn-warning" style="padding: 15px; font-size: 1.1rem;" onclick="syncToCloud()">☁️ Sync to Firebase</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-success" style="flex: 1;" onclick="exportData()">💾 Backup JSON</button>
+                <button class="btn-primary" style="flex: 1;" onclick="document.getElementById('importFile').click()">📂 Import JSON</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+            </div>
+        </div>
     </div>
 
     <div id="map"></div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
+            authDomain: "bike-trackerv7.firebaseapp.com",
+            databaseURL: "https://bike-trackerv7-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "bike-trackerv7",
+            storageBucket: "bike-trackerv7.firebasestorage.app",
+            messagingSenderId: "829142915200",
+            appId: "1:829142915200:web:cd37f3234ecb850421ae65"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const EDITOR_PASSCODE = "bus2024"; // <-- CHANGE THIS TO YOUR PREFERRED PASSCODE
+
         const map = L.map('map').setView([47.132, 24.491], 14);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-        // --- CORE DATA STATE ---
-        let stops = [];
-        let routes = [];
-        let trips = [];
-        let departures = [];
+        let stops = [], routes = [], trips = [], departures = [];
+        let stopMarkers = {}, mapMode = 'stops';
+        let activeTripId = null, tempShape = [], tempSequence = [], tempPolyline = null;
 
-        let stopMarkers = {};
-        let mapMode = 'stops';
+        // INITIAL LOAD FROM FIREBASE
+        async function loadFromCloud() {
+            try {
+                const snapshot = await get(ref(db, 'master_transit_data'));
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    stops = data.stops || [];
+                    routes = data.routes || [];
+                    trips = data.trips || [];
+                    departures = data.departures || [];
+                }
+                refreshUI();
+            } catch (e) {
+                console.error("Failed to load cloud data", e);
+                alert("Could not load data from Firebase. Starting fresh.");
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+        window.addEventListener('DOMContentLoaded', loadFromCloud);
 
-        // --- DRAWING STATE ---
-        let activeTripId = null;
-        let tempShape = [];
-        let tempSequence = [];
-        let tempPolyline = null;
-
-        // --- UI LOGIC ---
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-            event.target.classList.add('active');
-            document.getElementById(tab + 'Tab').classList.add('active');
-
-            if (tab === 'stops' && mapMode === 'drawing_trip') cancelDrawing();
+        // CLOUD SYNC
+        window.syncToCloud = async function() {
+            const pass = prompt("Enter Admin Passcode to overwrite cloud database:");
+            if (pass !== EDITOR_PASSCODE) {
+                if (pass !== null) alert("Incorrect passcode.");
+                return;
+            }
+            
+            document.getElementById('loadingOverlay').textContent = "Saving to Cloud...";
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            const finalData = { stops, routes, trips, departures };
+            try {
+                await set(ref(db, 'master_transit_data'), finalData);
+                alert("Successfully synced to Firebase!");
+            } catch(e) {
+                console.error(e);
+                alert("Failed to sync to Firebase.");
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('loadingOverlay').textContent = "Loading Cloud Data...";
+            }
         }
 
-        // --- MAP INTERACTION ---
-        map.on('click', function (e) {
+        // --- MAP & UI LOGIC (Exposed to window for HTML access) ---
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+            if(tab === 'stops' && mapMode === 'drawing_trip') window.cancelDrawing();
+        }
+
+        map.on('click', (e) => {
             if (mapMode === 'stops') {
                 const stopName = prompt("Enter a name for this stop:");
                 if (!stopName) return;
-
-                const newStop = { id: 'stop_' + Date.now(), name: stopName, lat: e.latlng.lat, lng: e.latlng.lng };
-                stops.push(newStop);
-                renderStops();
-                drawMarkers();
+                stops.push({ id: 'stop_' + Date.now(), name: stopName, lat: e.latlng.lat, lng: e.latlng.lng });
+                refreshUI();
             } else if (mapMode === 'drawing_trip') {
                 tempShape.push([e.latlng.lat, e.latlng.lng]);
-                updateTempPolyline();
+                if(tempPolyline) tempPolyline.setLatLngs(tempShape);
             }
         });
 
@@ -255,231 +171,144 @@
                 const travelMins = prompt(`Minutes from start to reach ${stop.name}?`, tempSequence.length === 0 ? "0" : "");
                 if (travelMins !== null) {
                     tempSequence.push({ stop_id: stop.id, travel_minutes_from_start: parseInt(travelMins) });
-                    renderRoutes();
+                    window.renderRoutes(); 
                 }
             }
         }
 
-        // --- STOPS LOGIC ---
-        function renderStops() {
-            const list = document.getElementById('stopsList');
-            list.innerHTML = '';
+        function refreshUI() {
+            window.renderStops();
+            window.drawMarkers();
+            window.renderRoutes();
+            window.drawTripShapes();
+        }
+
+        window.renderStops = () => {
+            const list = document.getElementById('stopsList'); list.innerHTML = '';
             stops.forEach(stop => {
-                list.innerHTML += `
-                    <div class="item-box" style="display:flex; justify-content:space-between; align-items:center;">
-                        <span><strong>${stop.name}</strong></span>
-                        <button class="btn-danger" style="width:auto; padding:4px 10px;" onclick="deleteStop('${stop.id}')">X</button>
-                    </div>`;
+                list.innerHTML += `<div class="item-box" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><strong>${stop.name}</strong></span>
+                    <button class="btn-danger" style="width:auto; padding:4px 10px;" onclick="deleteStop('${stop.id}')">X</button>
+                </div>`;
             });
         }
 
-        function drawMarkers() {
+        window.drawMarkers = () => {
             Object.values(stopMarkers).forEach(m => map.removeLayer(m));
             stopMarkers = {};
             stops.forEach(stop => {
-                const marker = L.marker([stop.lat, stop.lng]).addTo(map).bindTooltip(stop.name, { permanent: true, direction: 'top' });
+                const marker = L.marker([stop.lat, stop.lng]).addTo(map).bindTooltip(stop.name, {permanent: true, direction: 'top'});
                 marker.on('click', () => handleStopClick(stop));
                 stopMarkers[stop.id] = marker;
             });
         }
 
-        function deleteStop(id) { stops = stops.filter(s => s.id !== id); renderStops(); drawMarkers(); }
+        window.deleteStop = (id) => { stops = stops.filter(s => s.id !== id); refreshUI(); }
 
-        // --- ROUTES & TRIPS LOGIC ---
-        function createRoute() {
+        window.createRoute = () => {
             const id = document.getElementById('routeId').value;
             const name = document.getElementById('routeName').value;
-            if (!id || !name) return alert("Fill both fields");
-
+            if(!id || !name) return alert("Fill both fields");
             routes.push({ route_id: id, name: name });
-            document.getElementById('routeId').value = '';
-            document.getElementById('routeName').value = '';
-            renderRoutes();
+            document.getElementById('routeId').value = ''; document.getElementById('routeName').value = '';
+            window.renderRoutes();
         }
 
-        function startDrawingTrip(routeId) {
-            const tripName = prompt("Trip Name");
-            if (!tripName) return;
-
-            mapMode = 'drawing_trip';
-            activeTripId = 'trip_' + Date.now();
-            tempShape = [];
-            tempSequence = [];
-
-            if (tempPolyline) map.removeLayer(tempPolyline);
-            tempPolyline = L.polyline([], { color: '#007bff', weight: 4 }).addTo(map);
-
+        window.startDrawingTrip = (routeId) => {
+            const tripName = prompt("Trip Name (e.g. TUR, RETUR):");
+            if(!tripName) return;
+            mapMode = 'drawing_trip'; activeTripId = 'trip_' + Date.now(); tempShape = []; tempSequence = [];
+            if(tempPolyline) map.removeLayer(tempPolyline);
+            tempPolyline = L.polyline([], {color: '#007bff', weight: 4}).addTo(map);
             document.getElementById('drawingModeAlert').style.display = 'block';
             trips.push({ trip_id: activeTripId, route_id: routeId, name: tripName, shape: [], stop_sequence: [] });
-            renderRoutes();
+            window.renderRoutes();
         }
 
-        function updateTempPolyline() {
-            if (tempPolyline) tempPolyline.setLatLngs(tempShape);
-        }
-
-        function saveDrawing() {
+        window.saveDrawing = () => {
             const trip = trips.find(t => t.trip_id === activeTripId);
-            if (trip) {
-                trip.shape = [...tempShape];
-                trip.stop_sequence = [...tempSequence];
-            }
+            if(trip) { trip.shape = [...tempShape]; trip.stop_sequence = [...tempSequence]; }
             endDrawingMode();
         }
 
-        function cancelDrawing() {
-            trips = trips.filter(t => t.trip_id !== activeTripId);
-            endDrawingMode();
-        }
+        window.cancelDrawing = () => { trips = trips.filter(t => t.trip_id !== activeTripId); endDrawingMode(); }
 
         function endDrawingMode() {
-            mapMode = 'stops';
-            activeTripId = null;
+            mapMode = 'stops'; activeTripId = null;
             document.getElementById('drawingModeAlert').style.display = 'none';
-            if (tempPolyline) map.removeLayer(tempPolyline);
-            renderRoutes();
-            drawTripShapes();
+            if(tempPolyline) map.removeLayer(tempPolyline);
+            refreshUI();
         }
 
-        // --- DEPARTURES LOGIC ---
-        function addDeparture(tripId) {
-            const timeInput = document.getElementById('time_' + tripId);
-            const timeVal = timeInput.value;
-            if (!timeVal) return;
-
+        window.addDeparture = (tripId) => {
+            const timeVal = document.getElementById('time_' + tripId).value;
+            if(!timeVal) return;
             departures.push({ id: 'dep_' + Date.now(), trip_id: tripId, time: timeVal });
-            timeInput.value = '';
-
-            // Sort departures chronologically
             departures.sort((a, b) => a.time.localeCompare(b.time));
-            renderRoutes();
+            window.renderRoutes();
         }
 
-        function deleteDeparture(depId) {
-            departures = departures.filter(d => d.id !== depId);
-            renderRoutes();
-        }
+        window.deleteDeparture = (depId) => { departures = departures.filter(d => d.id !== depId); window.renderRoutes(); }
 
-        function renderRoutes() {
-            const list = document.getElementById('routesList');
-            list.innerHTML = '';
+        window.renderRoutes = () => {
+            const list = document.getElementById('routesList'); list.innerHTML = '';
             routes.forEach(route => {
-                let html = `<div class="item-box">
-                    <h3 style="margin-bottom: 5px;">Linia ${route.route_id}: ${route.name}</h3>
-                    <button class="btn-primary" style="padding: 6px; font-size: 0.9rem;" onclick="startDrawingTrip('${route.route_id}')">+ Add Trip Path</button>
-                `;
-
-                const routeTrips = trips.filter(t => t.route_id === route.route_id);
-                routeTrips.forEach(trip => {
+                let html = `<div class="item-box"><h3 style="margin-bottom: 5px;">Linia ${route.route_id}: ${route.name}</h3>
+                    <button class="btn-primary" style="padding: 6px; font-size: 0.9rem;" onclick="startDrawingTrip('${route.route_id}')">+ Add Trip Path</button>`;
+                
+                trips.filter(t => t.route_id === route.route_id).forEach(trip => {
                     const isDraft = (trip.trip_id === activeTripId);
+                    const sequenceHtml = (isDraft ? tempSequence : trip.stop_sequence).map(seq => 
+                        `<div class="stop-sequence-item"><span>${stops.find(s => s.id === seq.stop_id)?.name || 'Unknown'}</span> <span style="color:#aaa;">+${seq.travel_minutes_from_start}m</span></div>`
+                    ).join('');
+                    const depsHtml = departures.filter(d => d.trip_id === trip.trip_id).map(d => 
+                        `<div class="dep-badge">${d.time} <button onclick="deleteDeparture('${d.id}')">✕</button></div>`
+                    ).join('');
 
-                    // Render Stops
-                    const sequenceHtml = (isDraft ? tempSequence : trip.stop_sequence).map(seq => {
-                        const sName = stops.find(s => s.id === seq.stop_id)?.name || 'Unknown';
-                        return `<div class="stop-sequence-item"><span>${sName}</span> <span style="color:#aaa;">+${seq.travel_minutes_from_start}m</span></div>`;
-                    }).join('');
-
-                    // Render Departures
-                    const tripDeps = departures.filter(d => d.trip_id === trip.trip_id);
-                    const depsHtml = tripDeps.map(d => `<div class="dep-badge">${d.time} <button onclick="deleteDeparture('${d.id}')">✕</button></div>`).join('');
-
-                    html += `
-                        <div style="background:#222; padding:10px; margin-top:10px; border-radius:4px; border-left: 4px solid ${isDraft ? '#ffc107' : '#007bff'}">
+                    html += `<div style="background:#222; padding:10px; margin-top:10px; border-radius:4px; border-left: 4px solid ${isDraft ? '#ffc107' : '#007bff'}">
                             <strong style="font-size: 1.1rem; color: #007bff;">${trip.name}</strong>
-                            
                             <div style="margin-top: 10px; background: #111; padding: 8px; border-radius: 4px;">
                                 <strong style="font-size: 0.85rem; color: #aaa;">ROUTE STOPS:</strong>
                                 ${sequenceHtml || '<div style="color:#666; font-size:0.85rem; margin-top:5px;">No stops added yet.</div>'}
                             </div>
-
-                            ${isDraft ? `
-                                <div style="margin-top:10px; display:flex; gap:5px;">
-                                    <button class="btn-success" style="flex:1" onclick="saveDrawing()">Save Path</button>
-                                    <button class="btn-danger" style="flex:1" onclick="cancelDrawing()">Cancel</button>
-                                </div>
-                            ` : `
-                                <div style="margin-top: 15px;">
-                                    <strong style="font-size: 0.85rem; color: #aaa;">DEPARTURE TIMES:</strong>
-                                    <div style="display:flex; flex-wrap:wrap; gap:5px; margin: 8px 0;">
-                                        ${depsHtml}
-                                    </div>
-                                    <div style="display:flex; gap:5px;">
-                                        <input type="time" id="time_${trip.trip_id}" style="margin:0;">
-                                        <button class="btn-success" style="width:auto; padding: 0 15px;" onclick="addDeparture('${trip.trip_id}')">Add Time</button>
-                                    </div>
-                                </div>
-                            `}
-                        </div>
-                    `;
+                            ${isDraft ? `<div style="margin-top:10px; display:flex; gap:5px;"><button class="btn-success" style="flex:1" onclick="saveDrawing()">Save Path</button><button class="btn-danger" style="flex:1" onclick="cancelDrawing()">Cancel</button></div>` 
+                            : `<div style="margin-top: 15px;"><strong style="font-size: 0.85rem; color: #aaa;">DEPARTURE TIMES:</strong><div style="display:flex; flex-wrap:wrap; gap:5px; margin: 8px 0;">${depsHtml}</div>
+                               <div style="display:flex; gap:5px;"><input type="time" id="time_${trip.trip_id}" style="margin:0;"><button class="btn-success" style="width:auto; padding: 0 15px;" onclick="addDeparture('${trip.trip_id}')">Add</button></div></div>`}
+                        </div>`;
                 });
-
-                html += `</div>`;
-                list.innerHTML += html;
+                list.innerHTML += html + `</div>`;
             });
         }
 
         let savedPolylines = [];
-        function drawTripShapes() {
-            savedPolylines.forEach(p => map.removeLayer(p));
-            savedPolylines = [];
+        window.drawTripShapes = () => {
+            savedPolylines.forEach(p => map.removeLayer(p)); savedPolylines = [];
             trips.forEach(trip => {
-                if (trip.shape.length > 0 && trip.trip_id !== activeTripId) {
-                    const line = L.polyline(trip.shape, { color: '#cc0000', weight: 3, opacity: 0.5 }).addTo(map);
-                    savedPolylines.push(line);
+                if(trip.shape.length > 0 && trip.trip_id !== activeTripId) {
+                    savedPolylines.push(L.polyline(trip.shape, {color: '#cc0000', weight: 3, opacity: 0.5}).addTo(map));
                 }
             });
         }
 
-        // --- JSON EXPORT ---
-        function exportData() {
-            const finalData = { stops, routes, trips, departures };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(finalData, null, 2));
-            const node = document.createElement('a');
-            node.setAttribute("href", dataStr);
-            node.setAttribute("download", "master_transit_data.json");
-            document.body.appendChild(node);
-            node.click();
-            node.remove();
+        window.exportData = () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, trips, departures }, null, 2));
+            const node = document.createElement('a'); node.setAttribute("href", dataStr); node.setAttribute("download", "master_backup.json");
+            document.body.appendChild(node); node.click(); node.remove();
         }
 
-        // --- JSON IMPORT ---
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
+        window.importData = (event) => {
+            const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = function (e) {
+            reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-
-                    // Restore the state arrays (fallback to empty arrays if missing)
-                    stops = data.stops || [];
-                    routes = data.routes || [];
-                    trips = data.trips || [];
-                    departures = data.departures || [];
-
-                    // Reset drawing states just in case
-                    activeTripId = null;
-                    if (tempPolyline) map.removeLayer(tempPolyline);
-                    document.getElementById('drawingModeAlert').style.display = 'none';
-
-                    // Re-render the UI and Map
-                    renderStops();
-                    drawMarkers();
-                    renderRoutes();
-                    drawTripShapes();
-
-                    // Reset the file input so you can import the same file again if needed
-                    document.getElementById('importFile').value = '';
-
-                } catch (err) {
-                    console.error(err);
-                    alert("Error importing file. Make sure it is a valid JSON generated by this editor.");
-                }
+                    stops = data.stops || []; routes = data.routes || []; trips = data.trips || []; departures = data.departures || [];
+                    activeTripId = null; if (tempPolyline) map.removeLayer(tempPolyline); document.getElementById('drawingModeAlert').style.display = 'none';
+                    refreshUI(); document.getElementById('importFile').value = ''; 
+                } catch (err) { alert("Error importing file."); }
             };
             reader.readAsText(file);
         }
     </script>
 </body>
-
 </html>
