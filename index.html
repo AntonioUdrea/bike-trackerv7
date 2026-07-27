@@ -219,7 +219,7 @@
     </div>
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
     
     const firebaseConfig = {
         apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
@@ -242,28 +242,25 @@
     let busMarker = null;
     let lastStopPanelName = null;
 
-    // Add 'get' to your imports at the top:
-// import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-async function initSystem() {
-    try {
-        const snapshot = await get(ref(db, 'master_transit_data'));
-        if (snapshot.exists()) {
-            masterData = snapshot.val();
-            masterData.stops = masterData.stops || [];
-            masterData.routes = masterData.routes || [];
-            masterData.trips = masterData.trips || [];
-            masterData.departures = masterData.departures || [];
+    async function initSystem() {
+        try {
+            const snapshot = await get(ref(db, 'master_transit_data'));
+            if (snapshot.exists()) {
+                masterData = snapshot.val();
+                masterData.stops = masterData.stops || [];
+                masterData.routes = masterData.routes || [];
+                masterData.trips = masterData.trips || [];
+                masterData.departures = masterData.departures || [];
+            }
+            
+            // Render the UI once data is loaded
+            buildMenu();
+            drawGlobalStops();
+            
+        } catch(e) { 
+            console.error('Error loading master data:', e); 
         }
-        
-        // Render the UI once data is loaded
-        buildMenu();
-        drawGlobalStops();
-        
-    } catch(e) { 
-        console.error('Error loading master data:', e); 
     }
-}
 
     function buildMenu() {
         const menu = document.getElementById('sideMenu');
@@ -387,7 +384,6 @@ async function initSystem() {
             });
         }
 
-        // Get the first departure time to calculate schedule (or default to current time for preview)
         const deps = masterData.departures.filter(d => d.trip_id === trip.trip_id).sort((a,b) => a.time.localeCompare(b.time));
         const baseTime = deps.length > 0 ? deps[0].time : '00:00';
 
@@ -423,6 +419,8 @@ async function initSystem() {
     window.closePanels = () => { document.getElementById('bottomPanel').classList.remove('open'); document.getElementById('routeDetail').classList.remove('open'); document.getElementById('panelOverlay').classList.remove('open'); }
     window.backToStopPanel = () => { document.getElementById('routeDetail').classList.remove('open'); if (lastStopPanelName) document.getElementById('bottomPanel').classList.add('open'); }
     window.toggleMenu = () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
+    // Fix: Make sure selecting from menu works globally
+    window.selectRouteFromMenu = (file, routeId, label, depTime) => { toggleMenu(); }
 
     // Firebase Listener
     onValue(ref(db, 'bus'), (snapshot) => {
@@ -442,6 +440,6 @@ async function initSystem() {
     });
 
     window.addEventListener('DOMContentLoaded', initSystem);
-</script>
+    </script>
 </body>
 </html>
