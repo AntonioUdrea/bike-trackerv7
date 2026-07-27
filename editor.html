@@ -90,7 +90,7 @@
         };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const EDITOR_PASSCODE = "bus2024"; // <-- CHANGE THIS TO YOUR PREFERRED PASSCODE
+        const EDITOR_PASSCODE = "bus2024";
 
         const map = L.map('map').setView([47.132, 24.491], 14);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
@@ -98,53 +98,37 @@
         let stops = [], routes = [], trips = [], departures = [];
         let stopMarkers = {}, mapMode = 'stops';
         let activeTripId = null, tempShape = [], tempSequence = [], tempPolyline = null;
+        
+        // UI State Variables
+        let routeCollapsed = {}; 
+        let tripHidden = {};
+        let editingTripId = null; // Track which trip's stops are currently being edited
 
-        // INITIAL LOAD FROM FIREBASE
         async function loadFromCloud() {
             try {
                 const snapshot = await get(ref(db, 'master_transit_data'));
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    stops = data.stops || [];
-                    routes = data.routes || [];
-                    trips = data.trips || [];
-                    departures = data.departures || [];
+                    stops = data.stops || []; routes = data.routes || [];
+                    trips = data.trips || []; departures = data.departures || [];
                 }
                 refreshUI();
-            } catch (e) {
-                console.error("Failed to load cloud data", e);
-                alert("Could not load data from Firebase. Starting fresh.");
-            } finally {
-                document.getElementById('loadingOverlay').style.display = 'none';
-            }
+            } catch (e) { alert("Could not load data from Firebase."); } 
+            finally { document.getElementById('loadingOverlay').style.display = 'none'; }
         }
         window.addEventListener('DOMContentLoaded', loadFromCloud);
 
-        // CLOUD SYNC
         window.syncToCloud = async function() {
-            const pass = prompt("Enter Admin Passcode to overwrite cloud database:");
-            if (pass !== EDITOR_PASSCODE) {
-                if (pass !== null) alert("Incorrect passcode.");
-                return;
-            }
-            
-            document.getElementById('loadingOverlay').textContent = "Saving to Cloud...";
+            const pass = prompt("Enter Admin Passcode:");
+            if (pass !== EDITOR_PASSCODE) return alert("Incorrect passcode.");
             document.getElementById('loadingOverlay').style.display = 'flex';
-            
-            const finalData = { stops, routes, trips, departures };
             try {
-                await set(ref(db, 'master_transit_data'), finalData);
+                await set(ref(db, 'master_transit_data'), { stops, routes, trips, departures });
                 alert("Successfully synced to Firebase!");
-            } catch(e) {
-                console.error(e);
-                alert("Failed to sync to Firebase.");
-            } finally {
-                document.getElementById('loadingOverlay').style.display = 'none';
-                document.getElementById('loadingOverlay').textContent = "Loading Cloud Data...";
-            }
+            } catch(e) { alert("Failed to sync."); } 
+            finally { document.getElementById('loadingOverlay').style.display = 'none'; }
         }
 
-        // --- MAP & UI LOGIC (Exposed to window for HTML access) ---
         window.switchTab = (tab) => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -155,66 +139,55 @@
 
         map.on('click', (e) => {
             if (mapMode === 'stops') {
-                const stopName = prompt("Enter a name for this stop:");
-                if (!stopName) return;
-                stops.push({ id: 'stop_' + Date.now(), name: stopName, lat: e.latlng.lat, lng: e.latlng.lng });
-                refreshUI();
+                const name = prompt("Stop name:");
+                if (name) { stops.push({ id: 'stop_' + Date.now(), name, lat: e.latlng.lat, lng: e.latlng.lng }); refreshUI(); }
             } else if (mapMode === 'drawing_trip') {
                 tempShape.push([e.latlng.lat, e.latlng.lng]);
                 if(tempPolyline) tempPolyline.setLatLngs(tempShape);
+            } else if (mapMode === 'editing_stops' && editingTripId) {
+                // If we are editing stops and click a blank map spot, maybe do nothing or let them pick from markers
             }
         });
 
         function handleStopClick(stop) {
             if (mapMode === 'drawing_trip') {
-                const travelMins = prompt(`Minutes from start to reach ${stop.name}?`, tempSequence.length === 0 ? "0" : "");
-                if (travelMins !== null) {
-                    tempSequence.push({ stop_id: stop.id, travel_minutes_from_start: parseInt(travelMins) });
-                    window.renderRoutes(); 
+                const travelMins = prompt(`Minutes from start to ${stop.name}?`, tempSequence.length === 0 ? "0" : "");
+                if (travelMins !== null) { tempSequence.push({ stop_id: stop.id, travel_minutes_from_start: parseInt(travelMins) }); window.renderRoutes(); }
+            } else if (mapMode === 'editing_stops' && editingTripId) {
+                const trip = trips.find(t => t.trip_id === editingTripId);
+                if(trip) {
+                    const travelMins = prompt(`Minutes from start to added stop (${stop.name}):`, "0");
+                    if (travelMins !== null) {
+                        trip.stop_sequence.push({ stop_id: stop.id, travel_minutes_from_start: parseInt(travelMins) });
+                        window.renderRoutes();
+                    }
                 }
             }
         }
 
-        function refreshUI() {
-            window.renderStops();
-            window.drawMarkers();
-            window.renderRoutes();
-            window.drawTripShapes();
-        }
+        function refreshUI() { window.renderStops(); window.drawMarkers(); window.renderRoutes(); window.drawTripShapes(); }
 
         window.renderStops = () => {
             const list = document.getElementById('stopsList'); list.innerHTML = '';
-            stops.forEach(stop => {
-                list.innerHTML += `<div class="item-box" style="display:flex; justify-content:space-between; align-items:center;">
-                    <span><strong>${stop.name}</strong></span>
-                    <button class="btn-danger" style="width:auto; padding:4px 10px;" onclick="deleteStop('${stop.id}')">X</button>
-                </div>`;
-            });
+            stops.forEach(stop => list.innerHTML += `<div class="item-box" style="display:flex; justify-content:space-between;"><span>${stop.name}</span><button class="btn-danger" onclick="deleteStop('${stop.id}')">X</button></div>`);
         }
-
         window.drawMarkers = () => {
-            Object.values(stopMarkers).forEach(m => map.removeLayer(m));
-            stopMarkers = {};
+            Object.values(stopMarkers).forEach(m => map.removeLayer(m)); stopMarkers = {};
             stops.forEach(stop => {
                 const marker = L.marker([stop.lat, stop.lng]).addTo(map).bindTooltip(stop.name, {permanent: true, direction: 'top'});
-                marker.on('click', () => handleStopClick(stop));
-                stopMarkers[stop.id] = marker;
+                marker.on('click', () => handleStopClick(stop)); stopMarkers[stop.id] = marker;
             });
         }
-
         window.deleteStop = (id) => { stops = stops.filter(s => s.id !== id); refreshUI(); }
 
         window.createRoute = () => {
             const id = document.getElementById('routeId').value;
             const name = document.getElementById('routeName').value;
-            if(!id || !name) return alert("Fill both fields");
-            routes.push({ route_id: id, name: name });
-            document.getElementById('routeId').value = ''; document.getElementById('routeName').value = '';
-            window.renderRoutes();
+            if(id && name) { routes.push({ route_id: id, name }); refreshUI(); }
         }
 
         window.startDrawingTrip = (routeId) => {
-            const tripName = prompt("Trip Name:");
+            const tripName = prompt("Trip Name (e.g. TUR, RETUR):");
             if(!tripName) return;
             mapMode = 'drawing_trip'; activeTripId = 'trip_' + Date.now(); tempShape = []; tempSequence = [];
             if(tempPolyline) map.removeLayer(tempPolyline);
@@ -223,58 +196,141 @@
             trips.push({ trip_id: activeTripId, route_id: routeId, name: tripName, shape: [], stop_sequence: [] });
             window.renderRoutes();
         }
-
         window.saveDrawing = () => {
             const trip = trips.find(t => t.trip_id === activeTripId);
             if(trip) { trip.shape = [...tempShape]; trip.stop_sequence = [...tempSequence]; }
             endDrawingMode();
         }
-
         window.cancelDrawing = () => { trips = trips.filter(t => t.trip_id !== activeTripId); endDrawingMode(); }
+        function endDrawingMode() { mapMode = 'stops'; activeTripId = null; document.getElementById('drawingModeAlert').style.display = 'none'; if(tempPolyline) map.removeLayer(tempPolyline); refreshUI(); }
 
-        function endDrawingMode() {
-            mapMode = 'stops'; activeTripId = null;
-            document.getElementById('drawingModeAlert').style.display = 'none';
-            if(tempPolyline) map.removeLayer(tempPolyline);
-            refreshUI();
-        }
-
-        window.addDeparture = (tripId) => {
-            const timeVal = document.getElementById('time_' + tripId).value;
-            if(!timeVal) return;
-            departures.push({ id: 'dep_' + Date.now(), trip_id: tripId, time: timeVal });
-            departures.sort((a, b) => a.time.localeCompare(b.time));
+        // --- NEW: EDIT EXISTING TRIP STOPS ---
+        window.toggleEditTripStops = (tripId) => {
+            if (editingTripId === tripId) {
+                editingTripId = null;
+                mapMode = 'stops';
+                document.getElementById('drawingModeAlert').style.display = 'none';
+            } else {
+                editingTripId = tripId;
+                mapMode = 'editing_stops';
+                document.getElementById('drawingModeAlert').innerHTML = '<b>[EDITING STOP SEQUENCE]</b> Click on existing map stops to add them to this trip. Adjust travel times below.';
+                document.getElementById('drawingModeAlert').style.display = 'block';
+            }
             window.renderRoutes();
         }
 
+        window.updateStopSequenceTime = (tripId, index, newTime) => {
+            const trip = trips.find(t => t.trip_id === tripId);
+            if(trip && trip.stop_sequence[index]) {
+                trip.stop_sequence[index].travel_minutes_from_start = parseInt(newTime) || 0;
+            }
+        }
+
+        window.removeStopFromTrip = (tripId, index) => {
+            const trip = trips.find(t => t.trip_id === tripId);
+            if(trip) {
+                trip.stop_sequence.splice(index, 1);
+                window.renderRoutes();
+            }
+        }
+        // -------------------------------------
+
+        window.addDeparture = (tripId) => {
+            const time = document.getElementById('time_' + tripId).value;
+            if(time) { departures.push({ id: 'dep_' + Date.now(), trip_id: tripId, time, next_dep_id: "" }); window.renderRoutes(); }
+        }
         window.deleteDeparture = (depId) => { departures = departures.filter(d => d.id !== depId); window.renderRoutes(); }
+        
+        window.updateNextDeparture = (depId, nextDepId) => {
+            const dep = departures.find(d => d.id === depId);
+            if(dep) dep.next_dep_id = nextDepId;
+        }
+
+        window.toggleRouteCollapse = (rId) => { routeCollapsed[rId] = !routeCollapsed[rId]; window.renderRoutes(); }
+        window.toggleTripShape = (tId) => { tripHidden[tId] = !tripHidden[tId]; window.drawTripShapes(); window.renderRoutes(); }
 
         window.renderRoutes = () => {
             const list = document.getElementById('routesList'); list.innerHTML = '';
-            routes.forEach(route => {
-                let html = `<div class="item-box"><h3 style="margin-bottom: 5px;">Linia ${route.route_id}: ${route.name}</h3>
-                    <button class="btn-primary" style="padding: 6px; font-size: 0.9rem;" onclick="startDrawingTrip('${route.route_id}')">+ Add Trip Path</button>`;
-                
-                trips.filter(t => t.route_id === route.route_id).forEach(trip => {
-                    const isDraft = (trip.trip_id === activeTripId);
-                    const sequenceHtml = (isDraft ? tempSequence : trip.stop_sequence).map(seq => 
-                        `<div class="stop-sequence-item"><span>${stops.find(s => s.id === seq.stop_id)?.name || 'Unknown'}</span> <span style="color:#aaa;">+${seq.travel_minutes_from_start}m</span></div>`
-                    ).join('');
-                    const depsHtml = departures.filter(d => d.trip_id === trip.trip_id).map(d => 
-                        `<div class="dep-badge">${d.time} <button onclick="deleteDeparture('${d.id}')">✕</button></div>`
-                    ).join('');
+            
+            const allDepsList = departures.map(d => {
+                const t = trips.find(trip => trip.trip_id === d.trip_id);
+                const r = t ? routes.find(route => route.route_id === t.route_id) : null;
+                return { id: d.id, label: (r && t) ? `L${r.route_id} ${t.name} - ${d.time}` : `Unknown - ${d.time}` };
+            });
 
-                    html += `<div style="background:#222; padding:10px; margin-top:10px; border-radius:4px; border-left: 4px solid ${isDraft ? '#ffc107' : '#007bff'}">
-                            <strong style="font-size: 1.1rem; color: #007bff;">${trip.name}</strong>
-                            <div style="margin-top: 10px; background: #111; padding: 8px; border-radius: 4px;">
-                                <strong style="font-size: 0.85rem; color: #aaa;">ROUTE STOPS:</strong>
-                                ${sequenceHtml || '<div style="color:#666; font-size:0.85rem; margin-top:5px;">No stops added yet.</div>'}
-                            </div>
-                            ${isDraft ? `<div style="margin-top:10px; display:flex; gap:5px;"><button class="btn-success" style="flex:1" onclick="saveDrawing()">Save Path</button><button class="btn-danger" style="flex:1" onclick="cancelDrawing()">Cancel</button></div>` 
-                            : `<div style="margin-top: 15px;"><strong style="font-size: 0.85rem; color: #aaa;">DEPARTURE TIMES:</strong><div style="display:flex; flex-wrap:wrap; gap:5px; margin: 8px 0;">${depsHtml}</div>
-                               <div style="display:flex; gap:5px;"><input type="time" id="time_${trip.trip_id}" style="margin:0;"><button class="btn-success" style="width:auto; padding: 0 15px;" onclick="addDeparture('${trip.trip_id}')">Add</button></div></div>`}
-                        </div>`;
-                });
+            routes.forEach(route => {
+                const isCollapsed = routeCollapsed[route.route_id];
+                let html = `<div class="item-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleRouteCollapse('${route.route_id}')">
+                        <h3 style="margin: 0; color:#fff;">Linia ${route.route_id}: ${route.name}</h3>
+                        <span style="font-size:1.2rem; color:#888;">${isCollapsed ? '▼' : '▲'}</span>
+                    </div>`;
+                
+                if (!isCollapsed) {
+                    html += `<div style="margin-top:15px;"><button class="btn-primary" onclick="startDrawingTrip('${route.route_id}')">+ Add Trip</button></div>`;
+                    
+                    trips.filter(t => t.route_id === route.route_id).forEach(trip => {
+                        const isDraft = (trip.trip_id === activeTripId);
+                        const isEditingStops = (trip.trip_id === editingTripId);
+                        const isHidden = tripHidden[trip.trip_id];
+                        
+                        // Sequence rendering for draft or editing or normal view
+                        const seqSource = isDraft ? tempSequence : trip.stop_sequence;
+                        const sequenceHtml = seqSource.map((seq, idx) => {
+                            const stopName = stops.find(s => s.id === seq.stop_id)?.name || 'Unknown Stop';
+                            if (isEditingStops) {
+                                // Interactive row when editing stops
+                                return `<div class="stop-sequence-item" style="display:flex; justify-content:space-between; align-items:center; gap:5px; margin-bottom:4px;">
+                                    <span style="color:#fff; font-size:0.9rem;">${idx+1}. ${stopName}</span>
+                                    <div style="display:flex; align-items:center; gap:4px;">
+                                        <input type="number" value="${seq.travel_minutes_from_start}" style="width:50px; padding:2px; font-size:0.8rem; background:#222; color:#fff; border:1px solid #444;" onchange="updateStopSequenceTime('${trip.trip_id}', ${idx}, this.value)">
+                                        <span style="font-size:0.8rem; color:#aaa;">min</span>
+                                        <button class="btn-danger" style="padding:1px 5px; font-size:0.75rem;" onclick="removeStopFromTrip('${trip.trip_id}', ${idx})">✕</button>
+                                    </div>
+                                </div>`;
+                            } else {
+                                return `<div class="stop-sequence-item"><span>${idx+1}. ${stopName}</span><span style="color:#aaa;">+${seq.travel_minutes_from_start}m</span></div>`;
+                            }
+                        }).join('');
+                        
+                        const depsHtml = departures.filter(d => d.trip_id === trip.trip_id).sort((a,b)=>a.time.localeCompare(b.time)).map(d => {
+                            const optionsHtml = allDepsList.map(opt => 
+                                opt.id !== d.id ? `<option value="${opt.id}" ${d.next_dep_id === opt.id ? 'selected' : ''}>${opt.label}</option>` : ''
+                            ).join('');
+
+                            return `<div style="background:#111; padding:8px; border-radius:4px; margin-bottom:5px; border-left:2px solid #007bff;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                    <strong style="color:#fff;">${d.time}</strong>
+                                    <button class="btn-danger" style="padding:2px 6px;" onclick="deleteDeparture('${d.id}')">✕</button>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:5px; font-size:0.85rem;">
+                                    <span style="color:#aaa;">Next:</span>
+                                    <select style="flex:1; background:#222; color:#fff; border:1px solid #444; padding:4px;" onchange="updateNextDeparture('${d.id}', this.value)">
+                                        <option value="">-- End Shift / None --</option>
+                                        ${optionsHtml}
+                                    </select>
+                                </div>
+                            </div>`;
+                        }).join('');
+
+                        html += `<div style="background:#222; padding:10px; margin-top:10px; border-radius:4px; border-left: 4px solid ${isDraft ? '#ffc107' : isEditingStops ? '#28a745' : '#555'}">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <strong style="font-size: 1.1rem; color: #007bff;">${trip.name}</strong>
+                                    <div style="display:flex; gap:5px;">
+                                        <button class="btn-warning" style="padding:4px 8px; font-size:0.8rem;" onclick="toggleTripShape('${trip.trip_id}')">${isHidden ? 'hide path' : 'show path'}</button>
+                                        <button class="btn-primary" style="padding:4px 8px; font-size:0.8rem; background:${isEditingStops ? '#28a745' : '#007bff'}" onclick="toggleEditTripStops('${trip.trip_id}')">${isEditingStops ? 'Save Stop Order' : 'Edit Stops'}</button>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px; background: #111; padding: 8px; border-radius: 4px;">
+                                    <strong style="font-size: 0.85rem; color: #aaa;">ROUTE STOPS (${seqSource.length}):</strong>
+                                    ${sequenceHtml || '<div style="color:#666; font-size:0.85rem; margin-top:5px;">No stops added yet.</div>'}
+                                </div>
+                                ${isDraft ? `<div style="margin-top:10px; display:flex; gap:5px;"><button class="btn-success" style="flex:1" onclick="saveDrawing()">Save Path</button><button class="btn-danger" style="flex:1" onclick="cancelDrawing()">Cancel</button></div>` 
+                                : `<div style="margin-top: 15px;"><strong style="font-size: 0.85rem; color: #aaa;">DEPARTURES & SCHEDULES:</strong><div style="margin: 8px 0;">${depsHtml}</div>
+                                   <div style="display:flex; gap:5px;"><input type="time" id="time_${trip.trip_id}" style="margin:0;"><button class="btn-success" style="width:auto; padding: 0 15px;" onclick="addDeparture('${trip.trip_id}')">Add</button></div></div>`}
+                            </div>`;
+                    });
+                }
                 list.innerHTML += html + `</div>`;
             });
         }
@@ -283,8 +339,8 @@
         window.drawTripShapes = () => {
             savedPolylines.forEach(p => map.removeLayer(p)); savedPolylines = [];
             trips.forEach(trip => {
-                if(trip.shape.length > 0 && trip.trip_id !== activeTripId) {
-                    savedPolylines.push(L.polyline(trip.shape, {color: '#cc0000', weight: 3, opacity: 0.5}).addTo(map));
+                if(trip.shape.length > 0 && trip.trip_id !== activeTripId && !tripHidden[trip.trip_id]) {
+                    savedPolylines.push(L.polyline(trip.shape, {color: '#cc0000', weight: 4, opacity: 0.6}).addTo(map));
                 }
             });
         }
@@ -294,17 +350,13 @@
             const node = document.createElement('a'); node.setAttribute("href", dataStr); node.setAttribute("download", "master_backup.json");
             document.body.appendChild(node); node.click(); node.remove();
         }
-
         window.importData = (event) => {
             const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    stops = data.stops || []; routes = data.routes || []; trips = data.trips || []; departures = data.departures || [];
-                    activeTripId = null; if (tempPolyline) map.removeLayer(tempPolyline); document.getElementById('drawingModeAlert').style.display = 'none';
-                    refreshUI(); document.getElementById('importFile').value = ''; 
-                } catch (err) { alert("Error importing file."); }
+                const data = JSON.parse(e.target.result);
+                stops = data.stops || []; routes = data.routes || []; trips = data.trips || []; departures = data.departures || [];
+                refreshUI(); document.getElementById('importFile').value = ''; 
             };
             reader.readAsText(file);
         }
