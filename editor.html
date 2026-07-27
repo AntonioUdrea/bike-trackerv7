@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Transit Editor - Cloud Sync</title>
+    <title>Editor</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -41,23 +41,22 @@
 
     <div id="sidebar">
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('stops')">📍 Stops</button>
-            <button class="tab-btn" onclick="switchTab('routes')">🚌 Routes & Trips</button>
+            <button class="tab-btn active" onclick="switchTab('stops')">Stops</button>
+            <button class="tab-btn" onclick="switchTab('routes')">Routes & Trips</button>
         </div>
 
         <div id="stopsTab" class="tab-content active">
-            <p style="font-size: 0.9rem; color: #aaa;">Click on the map to drop a new physical stop.</p>
+            <p style="font-size: 0.9rem; color: #aaa;"></p>
             <div id="stopsList"></div>
         </div>
 
         <div id="routesTab" class="tab-content">
-            <div id="drawingModeAlert" class="drawing-indicator">
-                ✏️ DRAWING MODE ACTIVE<br><small>Click map to draw path. Click stops to add to sequence.</small>
+            <div id="drawingModeAlert" class="drawing-indicator"><br><small>Click map to draw path. Click stops to add to sequence.</small>
             </div>
             <div id="routeManager">
                 <h3>Create New Route</h3>
-                <input type="text" id="routeId" placeholder="Route ID (e.g., 1, 1B)">
-                <input type="text" id="routeName" placeholder="Route Name (e.g., BIG - LEONI)">
+                <input type="text" id="routeId" placeholder="Route ID">
+                <input type="text" id="routeName" placeholder="Route Name">
                 <button class="btn-primary" onclick="createRoute()">Add Route</button>
             </div>
             <hr style="border-color: #444; margin: 15px 0;">
@@ -65,10 +64,10 @@
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 15px; flex-shrink: 0; flex-direction: column;">
-            <button class="btn-warning" style="padding: 15px; font-size: 1.1rem;" onclick="syncToCloud()">☁️ Sync to Firebase</button>
+            <button class="btn-warning" style="padding: 15px; font-size: 1.1rem;" onclick="syncToCloud()">Sync to Firebase</button>
             <div style="display: flex; gap: 10px;">
-                <button class="btn-success" style="flex: 1;" onclick="exportData()">💾 Backup JSON</button>
-                <button class="btn-primary" style="flex: 1;" onclick="document.getElementById('importFile').click()">📂 Import JSON</button>
+                <button class="btn-success" style="flex: 1;" onclick="exportData()">Backup JSON</button>
+                <button class="btn-primary" style="flex: 1;" onclick="document.getElementById('importFile').click()">Import JSON</button>
                 <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
             </div>
         </div>
@@ -215,7 +214,7 @@
         }
 
         window.startDrawingTrip = (routeId) => {
-            const tripName = prompt("Trip Name (e.g. TUR, RETUR):");
+            const tripName = prompt("Trip Name:");
             if(!tripName) return;
             mapMode = 'drawing_trip'; activeTripId = 'trip_' + Date.now(); tempShape = []; tempSequence = [];
             if(tempPolyline) map.removeLayer(tempPolyline);
