@@ -39,6 +39,8 @@
         let tripDate = null;
         let stopLog = [];
         let currentLateness = '0';
+        let isAtStop = false;
+        let activeStopIndex = null;
 
         function updateHeader() {
             const now = new Date();
@@ -59,7 +61,7 @@
         window.showRouteList = function () {
             const list = document.getElementById('routeList');
             list.innerHTML = '';
-            
+
             if (!masterData.routes || masterData.routes.length === 0) {
                 list.innerHTML = '<div style="color:white; padding: 20px;">No routes found in Firebase. Add routes using editor.html!</div>';
             } else {
@@ -133,7 +135,7 @@
             tripStartTime = null;
             tripDate = new Date().toISOString().slice(0, 10);
             stopLog = [];
-            
+
             document.getElementById('screen2').style.display = 'none';
             document.getElementById('driverScreen').style.display = 'flex';
             document.querySelector('.leftPanel').style.display = 'flex';
@@ -218,8 +220,22 @@
             if (currentStopIndex >= routeStops.length) return;
             const nextStop = routeStops[currentStopIndex];
             const scheduledTime = getStopScheduledTime(nextStop);
+
+            // Calculate time difference to check if it's within 5 minutes of departure
+            const now = new Date();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+
+            const [depH, depM] = departureTime.split(':').map(Number);
+            const depMins = depH * 60 + depM;
+
+            // Difference: departure time minus current time (in minutes)
+            const timeUntilDeparture = depMins - currentMins;
+
+            // If the driver is logged in more than 5 minutes before departure, keep it hidden on the map
+            const shouldShowLive = timeUntilDeparture <= 5;
+
             set(busRef, {
-                active: true,
+                active: shouldShowLive, // Only true if 5 minutes or less before departure (or already started)
                 lat, lng,
                 routeId: currentRouteId,
                 route: currentRouteName,
@@ -249,24 +265,49 @@
 
         function checkStop(latlng) {
             if (currentStopIndex >= routeStops.length) return;
-            for (let i = currentStopIndex; i < routeStops.length; i++) {
-                const stop = routeStops[i];
-                const stopLatLng = [stop.lat, stop.lng];
-                if (getDistance(latlng, stopLatLng) <= 30) {
+
+            const currentStop = routeStops[currentStopIndex];
+            const stopLatLng = [currentStop.lat, currentStop.lng];
+            const distance = getDistance(latlng, stopLatLng);
+            const radiusThreshold = 30; // Matches your current 30-meter radius setup
+
+            if (!isAtStop) {
+                // Phase 1: Check if the bus has entered the stop radius
+                if (distance <= radiusThreshold) {
+                    isAtStop = true;
+                    activeStopIndex = currentStopIndex;
+                    console.log(`Arrived at stop: ${currentStop.name}`);
+                }
+            } else {
+                // Phase 2: The bus was at the stop, check if it has now LEFT the radius
+                if (distance > radiusThreshold) {
                     const actualTime = new Date().toTimeString().slice(0, 5);
-                    const scheduledTime = getStopScheduledTime(stop);
+                    const scheduledTime = getStopScheduledTime(currentStop);
                     const [sh, sm] = scheduledTime.split(':').map(Number);
                     const [ah, am] = actualTime.split(':').map(Number);
                     const diffMins = (ah * 60 + am) - (sh * 60 + sm);
 
                     currentLateness = diffMins === 0 ? "0" :
-                                      diffMins > 0 ? `+${diffMins}'` :
-                                      `${diffMins}'`;
+                        diffMins > 0 ? `+${diffMins}'` :
+                            `${diffMins}'`;
 
-                    stopLog.push({ name: stop.name, scheduled: scheduledTime, actual: actualTime, diff: diffMins });
-                    currentStopIndex = i + 1;
-                    if (currentStopIndex >= routeStops.length) endRoute(true);
-                    return;
+                    stopLog.push({
+                        name: currentStop.name,
+                        scheduled: scheduledTime,
+                        actual: actualTime,
+                        diff: diffMins
+                    });
+
+                    console.log(`Left stop: ${currentStop.name}. Lateness calculated: ${currentLateness}`);
+
+                    // Reset dwell state and advance to the next stop
+                    isAtStop = false;
+                    activeStopIndex = null;
+                    currentStopIndex++;
+
+                    if (currentStopIndex >= routeStops.length) {
+                        endRoute(true);
+                    }
                 }
             }
         }
@@ -302,7 +343,7 @@
         }
 
         window.addEventListener("beforeunload", () => set(busRef, { active: false }));
-        
+
         // LOAD DATA FROM FIREBASE AT STARTUP
         window.addEventListener('DOMContentLoaded', async () => {
             try {
@@ -360,4 +401,5 @@
         </div>
     </div>
 </body>
+
 </html>
