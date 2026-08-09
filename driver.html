@@ -23,8 +23,8 @@
         const busRef = ref(db, 'bus');
         onDisconnect(busRef).set({ active: false });
 
+        // Global State Variables
         let masterData = { stops: [], routes: [], trips: [], departures: [] };
-
         let watchId = null;
         let timerInterval = null;
         let routeStops = [];
@@ -39,8 +39,11 @@
         let tripDate = null;
         let stopLog = [];
         let currentLateness = '0';
+
+        // New state tracking for dwell/bubble mechanics
         let isAtStop = false;
         let activeStopIndex = null;
+        let isIdleStandby = false; // Tracks if driver is on the empty end-of-day standby screen
 
         function updateHeader() {
             const now = new Date();
@@ -217,25 +220,18 @@
         }
 
         function pushToFirebase(lat, lng) {
-            if (currentStopIndex >= routeStops.length) return;
+            if (isIdleStandby || currentStopIndex >= routeStops.length) return;
             const nextStop = routeStops[currentStopIndex];
             const scheduledTime = getStopScheduledTime(nextStop);
 
-            // Calculate time difference to check if it's within 5 minutes of departure
             const now = new Date();
             const currentMins = now.getHours() * 60 + now.getMinutes();
-
             const [depH, depM] = departureTime.split(':').map(Number);
-            const depMins = depH * 60 + depM;
-
-            // Difference: departure time minus current time (in minutes)
-            const timeUntilDeparture = depMins - currentMins;
-
-            // If the driver is logged in more than 5 minutes before departure, keep it hidden on the map
+            const timeUntilDeparture = (depH * 60 + depM) - currentMins;
             const shouldShowLive = timeUntilDeparture <= 5;
 
             set(busRef, {
-                active: shouldShowLive, // Only true if 5 minutes or less before departure (or already started)
+                active: shouldShowLive,
                 lat, lng,
                 routeId: currentRouteId,
                 route: currentRouteName,
@@ -243,6 +239,22 @@
                 scheduledTime,
                 status: currentLateness
             });
+        }
+
+        window.endRoute = function () {
+            saveTrip();
+            stopAllTracking();
+            set(busRef, { active: false });
+            routeStops = []; 
+            currentStopIndex = 0;
+            stopLog = [];
+            isAtStop = false;
+            activeStopIndex = null;
+            isIdleStandby = false;
+            
+            document.querySelector('.leftPanel').style.display = 'flex';
+            document.getElementById('driverScreen').style.display = 'none';
+            showRouteList();
         }
 
         function saveTrip() {
@@ -264,52 +276,134 @@
         }
 
         function checkStop(latlng) {
-            if (currentStopIndex >= routeStops.length) return;
+            if (isIdleStandby || currentStopIndex >= routeStops.length) return;
 
-            const currentStop = routeStops[currentStopIndex];
-            const stopLatLng = [currentStop.lat, currentStop.lng];
-            const distance = getDistance(latlng, stopLatLng);
-            const radiusThreshold = 30; // Matches your current 30-meter radius setup
+            const radiusThreshold = 30; // 30-meter radius threshold
 
             if (!isAtStop) {
-                // Phase 1: Check if the bus has entered the stop radius
-                if (distance <= radiusThreshold) {
-                    isAtStop = true;
-                    activeStopIndex = currentStopIndex;
-                    console.log(`Arrived at stop: ${currentStop.name}`);
+                // Phase 1: Look ahead to check if we are entering any remaining stop (handles diversions & skipping)
+                for (let i = currentStopIndex; i < routeStops.length; i++) {
+                    const stop = routeStops[i];
+                    const distance = getDistance(latlng, [stop.lat, stop.lng]);
+
+                    if (distance <= radiusThreshold) {
+                        currentStopIndex = i;
+                        activeStopIndex = i;
+                        isAtStop = true;
+
+                        // SPECIAL RULE: If this is the very last stop of the route, end immediately on "touch"
+                        if (currentStopIndex === routeStops.length - 1) {
+                            processStopArrivalAndExit(stop);
+                            handleRouteCompletion();
+                            return;
+                        }
+
+                        console.log(`Arrived at stop: ${stop.name}`);
+                        break;
+                    }
                 }
             } else {
-                // Phase 2: The bus was at the stop, check if it has now LEFT the radius
+                // Phase 2: The bus was dwelling at a stop, check if it has now LEFT the radius
+                const activeStop = routeStops[activeStopIndex];
+                const distance = getDistance(latlng, [activeStop.lat, activeStop.lng]);
+
                 if (distance > radiusThreshold) {
-                    const actualTime = new Date().toTimeString().slice(0, 5);
-                    const scheduledTime = getStopScheduledTime(currentStop);
-                    const [sh, sm] = scheduledTime.split(':').map(Number);
-                    const [ah, am] = actualTime.split(':').map(Number);
-                    const diffMins = (ah * 60 + am) - (sh * 60 + sm);
+                    processStopArrivalAndExit(activeStop);
 
-                    currentLateness = diffMins === 0 ? "0" :
-                        diffMins > 0 ? `+${diffMins}'` :
-                            `${diffMins}'`;
-
-                    stopLog.push({
-                        name: currentStop.name,
-                        scheduled: scheduledTime,
-                        actual: actualTime,
-                        diff: diffMins
-                    });
-
-                    console.log(`Left stop: ${currentStop.name}. Lateness calculated: ${currentLateness}`);
-
-                    // Reset dwell state and advance to the next stop
+                    // Reset dwell state and move to next stop
                     isAtStop = false;
                     activeStopIndex = null;
                     currentStopIndex++;
 
                     if (currentStopIndex >= routeStops.length) {
-                        endRoute(true);
+                        handleRouteCompletion();
                     }
                 }
             }
+        }
+
+        // Helper function to log times and calculate lateness when leaving a stop
+        function processStopArrivalAndExit(stop) {
+            const actualTime = new Date().toTimeString().slice(0, 5);
+            const scheduledTime = getStopScheduledTime(stop);
+            const [sh, sm] = scheduledTime.split(':').map(Number);
+            const [ah, am] = actualTime.split(':').map(Number);
+            const diffMins = (ah * 60 + am) - (sh * 60 + sm);
+
+            currentLateness = diffMins === 0 ? "0" :
+                              diffMins > 0 ? `+${diffMins}'` :
+                              `${diffMins}'`;
+
+            stopLog.push({ 
+                name: stop.name, 
+                scheduled: scheduledTime, 
+                actual: actualTime, 
+                diff: diffMins 
+            });
+        }
+
+        // Handles what happens when a trip reaches its final destination
+        function handleRouteCompletion() {
+            saveTrip();
+            stopAllTracking();
+            set(busRef, { active: false });
+
+            // Check if there is an upcoming trip today
+            const nextDep = findNextScheduledDeparture(currentRouteId, departureTime);
+
+            if (nextDep) {
+                // Automatically chain/switch into the next consecutive trip seamlessly
+                selectRoute(nextDep, currentRouteId);
+            } else {
+                // Last run of the day: Enter Idle Standby mode
+                enterIdleStandbyScreen();
+            }
+        }
+
+        // Helper to find the next chronological departure on the same line
+        function findNextScheduledDeparture(routeId, currentDepTime) {
+            const routeTrips = masterData.trips.filter(t => t.route_id === routeId);
+            let availableDepartures = [];
+
+            routeTrips.forEach(trip => {
+                const deps = masterData.departures.filter(d => d.trip_id === trip.trip_id);
+                deps.forEach(d => {
+                    availableDepartures.push({
+                        departureId: d.id,
+                        time: d.time,
+                        trip: trip
+                    });
+                });
+            });
+
+            availableDepartures.sort((a, b) => a.time.localeCompare(b.time));
+            const currentIndex = availableDepartures.findIndex(d => d.time === currentDepTime);
+
+            if (currentIndex !== -1 && currentIndex + 1 < availableDepartures.length) {
+                return availableDepartures[currentIndex + 1];
+            }
+            return null;
+        }
+
+        // Displays the screen with no route number, lateness, or stops, but keeps functional controls
+        function enterIdleStandbyScreen() {
+            isIdleStandby = true;
+            routeStops = [];
+            currentStopIndex = 0;
+            stopLog = [];
+            isAtStop = false;
+            activeStopIndex = null;
+
+            // Clear visual indicators on the driver screen layout
+            document.getElementById('routeNumber').textContent = '';
+            document.getElementById('latenessDisplay').textContent = '';
+            document.getElementById('stopList').innerHTML = '<div style="color:white; padding:20px; text-align:center; font-size:18px;">Program terminat (Ultima cursă)</div>';
+            
+            // Ensure the screen remains open and active for the driver controls
+            document.querySelector('.leftPanel').style.display = 'flex';
+            document.getElementById('driverScreen').style.display = 'flex';
+            document.getElementById('screen1').style.display = 'none';
+            document.getElementById('screen2').style.display = 'none';
         }
 
         function getDistance([lat1, lng1], [lat2, lng2]) {
