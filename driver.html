@@ -39,6 +39,7 @@
         let tripDate = null;
         let stopLog = [];
         let currentLateness = '0';
+        let currentDepId = null;
 
         // New state tracking for dwell/bubble mechanics
         let isAtStop = false;
@@ -117,12 +118,19 @@
         }
 
         window.selectRoute = function (dep, routeId) {
+            currentDepId = dep.departureId; // Track the current departure ID
+
             const trip = dep.trip;
             currentRouteName = `${trip.name} ${dep.time}`;
             currentRouteId = routeId;
             departureTime = dep.time;
 
-            // Build stop list for this trip sequence
+            // Restore UI elements in case we are coming from the Idle Standby Screen
+            const routeBox = document.querySelector('.routeBox');
+            if (routeBox) routeBox.style.display = 'flex';
+            const latenessDisplay = document.getElementById('latenessDisplay');
+            if (latenessDisplay) latenessDisplay.style.display = 'block';
+
             routeStops = (trip.stop_sequence || []).map(seq => {
                 const stopObj = masterData.stops.find(s => s.id === seq.stop_id);
                 return {
@@ -245,13 +253,13 @@
             saveTrip();
             stopAllTracking();
             set(busRef, { active: false });
-            routeStops = []; 
+            routeStops = [];
             currentStopIndex = 0;
             stopLog = [];
             isAtStop = false;
             activeStopIndex = null;
             isIdleStandby = false;
-            
+
             document.querySelector('.leftPanel').style.display = 'flex';
             document.getElementById('driverScreen').style.display = 'none';
             showRouteList();
@@ -262,6 +270,7 @@
             const endTime = new Date().toTimeString().slice(0, 8);
             const tripKey = `${tripDate}_${currentRouteId}_${departureTime.replace(':', '')}`;
             const tripsRef = ref(db, `trips/${tripKey}`);
+
             set(tripsRef, {
                 routeName: currentRouteName,
                 routeId: currentRouteId,
@@ -270,8 +279,8 @@
                 startTime: tripStartTime,
                 endTime,
                 distanceKm: (totalDistance / 1000).toFixed(2),
-                track: tripTrack,
-                stops: stopLog
+                track: [...tripTrack], // [... ] creates a safe copy so it isn't lost if cleared instantly
+                stops: [...stopLog]    // Safe copy
             });
         }
 
@@ -331,14 +340,14 @@
             const diffMins = (ah * 60 + am) - (sh * 60 + sm);
 
             currentLateness = diffMins === 0 ? "0" :
-                              diffMins > 0 ? `+${diffMins}'` :
-                              `${diffMins}'`;
+                diffMins > 0 ? `+${diffMins}'` :
+                    `${diffMins}'`;
 
-            stopLog.push({ 
-                name: stop.name, 
-                scheduled: scheduledTime, 
-                actual: actualTime, 
-                diff: diffMins 
+            stopLog.push({
+                name: stop.name,
+                scheduled: scheduledTime,
+                actual: actualTime,
+                diff: diffMins
             });
         }
 
@@ -348,41 +357,37 @@
             stopAllTracking();
             set(busRef, { active: false });
 
-            // Check if there is an upcoming trip today
-            const nextDep = findNextScheduledDeparture(currentRouteId, departureTime);
+            // Look for explicitly linked next shift
+            const nextDepInfo = findNextScheduledDeparture();
 
-            if (nextDep) {
-                // Automatically chain/switch into the next consecutive trip seamlessly
-                selectRoute(nextDep, currentRouteId);
+            if (nextDepInfo) {
+                // Switch seamlessly to the exact next shift
+                selectRoute(nextDepInfo, nextDepInfo.routeId);
             } else {
-                // Last run of the day: Enter Idle Standby mode
                 enterIdleStandbyScreen();
             }
         }
 
-        // Helper to find the next chronological departure on the same line
-        function findNextScheduledDeparture(routeId, currentDepTime) {
-            const routeTrips = masterData.trips.filter(t => t.route_id === routeId);
-            let availableDepartures = [];
 
-            routeTrips.forEach(trip => {
-                const deps = masterData.departures.filter(d => d.trip_id === trip.trip_id);
-                deps.forEach(d => {
-                    availableDepartures.push({
-                        departureId: d.id,
-                        time: d.time,
-                        trip: trip
-                    });
-                });
-            });
+        function findNextScheduledDeparture() {
+            const currentDep = masterData.departures.find(d => d.id === currentDepId);
 
-            availableDepartures.sort((a, b) => a.time.localeCompare(b.time));
-            const currentIndex = availableDepartures.findIndex(d => d.time === currentDepTime);
-
-            if (currentIndex !== -1 && currentIndex + 1 < availableDepartures.length) {
-                return availableDepartures[currentIndex + 1];
+            // Check if a next shift was explicitly set in the editor
+            if (currentDep && currentDep.next_dep_id) {
+                const nextDep = masterData.departures.find(d => d.id === currentDep.next_dep_id);
+                if (nextDep) {
+                    const nextTrip = masterData.trips.find(t => t.trip_id === nextDep.trip_id);
+                    if (nextTrip) {
+                        return {
+                            departureId: nextDep.id,
+                            time: nextDep.time,
+                            trip: nextTrip,
+                            routeId: nextTrip.route_id
+                        };
+                    }
+                }
             }
-            return null;
+            return null; // End of shift
         }
 
         // Displays the screen with no route number, lateness, or stops, but keeps functional controls
@@ -394,12 +399,15 @@
             isAtStop = false;
             activeStopIndex = null;
 
-            // Clear visual indicators on the driver screen layout
-            document.getElementById('routeNumber').textContent = '';
-            document.getElementById('latenessDisplay').textContent = '';
+            // Completely hide the UI elements instead of just clearing text
+            const routeBox = document.querySelector('.routeBox');
+            if (routeBox) routeBox.style.display = 'none';
+
+            const latenessDisplay = document.getElementById('latenessDisplay');
+            if (latenessDisplay) latenessDisplay.style.display = 'none';
+
             document.getElementById('stopList').innerHTML = '<div style="color:white; padding:20px; text-align:center; font-size:18px;">Program terminat (Ultima cursă)</div>';
-            
-            // Ensure the screen remains open and active for the driver controls
+
             document.querySelector('.leftPanel').style.display = 'flex';
             document.getElementById('driverScreen').style.display = 'flex';
             document.getElementById('screen1').style.display = 'none';
@@ -421,11 +429,22 @@
         }
 
         window.endRoute = function () {
+            // If the driver manually ends the route while inside a stop radius, log it before saving
+            if (isAtStop && activeStopIndex !== null) {
+                processStopArrivalAndExit(routeStops[activeStopIndex]);
+            }
+
             saveTrip();
             stopAllTracking();
             set(busRef, { active: false });
-            routeStops = []; currentStopIndex = 0;
+
+            routeStops = [];
+            currentStopIndex = 0;
             stopLog = [];
+            isAtStop = false;
+            activeStopIndex = null;
+            isIdleStandby = false;
+
             document.querySelector('.leftPanel').style.display = 'flex';
             document.getElementById('driverScreen').style.display = 'none';
             showRouteList();
