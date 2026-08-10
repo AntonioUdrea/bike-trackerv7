@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Istoric</title>
+    <title>History</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="style.css">
@@ -30,7 +30,16 @@
         .tripRow:active { background: #222; }
         .tripRowText { display: flex; flex-direction: column; flex: 1; gap: 4px; }
         .tripRowTop { display: flex; justify-content: space-between; align-items: center; }
-        .tripName { font-size: 1.2rem; font-weight: bold; }
+        .tripName { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .routeBadge {
+            background: #007bff;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
         .tripDate { font-size: 1rem; color: #aaa; }
         .tripMeta { font-size: 0.95rem; color: #aaa; display: flex; gap: 20px; }
         .tripMeta span { color: #ccc; }
@@ -138,6 +147,9 @@
             trips.sort((a, b) => b.date.localeCompare(a.date) || b.departureTime.localeCompare(a.departureTime));
             list.innerHTML = '';
             trips.forEach(trip => {
+                const routeId = trip.routeId || (trip.key ? trip.key.split('_')[1] : null);
+                const badgeHtml = routeId ? `<span class="routeBadge">Linia ${routeId}</span>` : '';
+
                 const row = document.createElement('div');
                 row.className = 'tripRow';
 
@@ -145,7 +157,7 @@
                 textDiv.className = 'tripRowText';
                 textDiv.innerHTML = `
                     <div class="tripRowTop">
-                        <span class="tripName">${trip.routeName || '-'}</span>
+                        <span class="tripName">${badgeHtml}<span>${trip.routeName || '-'}</span></span>
                         <span class="tripDate">${trip.date || '-'}</span>
                     </div>
                     <div class="tripMeta">
@@ -172,9 +184,12 @@
         }
 
         window.showTrip = function(trip) {
+            const routeId = trip.routeId || (trip.key ? trip.key.split('_')[1] : null);
+            const routePrefix = routeId ? `Linia ${routeId}: ` : '';
+
             document.getElementById('historyScreen').style.display = 'none';
             document.getElementById('mapView').style.display = 'flex';
-            document.getElementById('mapTitle').textContent = trip.routeName || '-';
+            document.getElementById('mapTitle').textContent = `${routePrefix}${trip.routeName || '-'}`;
             document.getElementById('mapStats').textContent = `${trip.date} · ${trip.distanceKm} km · ${trip.startTime} – ${trip.endTime}`;
 
             if (!tripMap) {
