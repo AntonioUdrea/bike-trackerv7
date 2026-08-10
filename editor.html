@@ -214,6 +214,24 @@
             }
         }
 
+        window.deleteRoute = (routeId) => {
+            if(confirm(`Are you sure you want to permanently delete Line ${routeId}? This will delete all associated trips and departures.`)) {
+                // Find all trips belonging to this route
+                const tripsToDelete = trips.filter(t => t.route_id === routeId).map(t => t.trip_id);
+                
+                // Remove the route
+                routes = routes.filter(r => r.route_id !== routeId);
+                
+                // Remove the associated trips
+                trips = trips.filter(t => t.route_id !== routeId);
+                
+                // Remove departures associated with those deleted trips
+                departures = departures.filter(d => !tripsToDelete.includes(d.trip_id));
+                
+                refreshUI();
+            }
+        }
+
         window.editTripName = (tripId) => {
             const trip = trips.find(t => t.trip_id === tripId);
             if (!trip) return;
@@ -312,7 +330,10 @@
                 let html = `<div class="item-box">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3 style="margin: 0; color:#fff; cursor:pointer; flex:1;" onclick="toggleRouteCollapse('${route.route_id}')">Linia ${route.route_id}: ${route.name} <span style="font-size:0.9rem; color:#888;">${isCollapsed ? '▼' : '▲'}</span></h3>
-                        <button class="btn-warning" style="padding:4px 8px; font-size:0.8rem;" onclick="editRoute('${route.route_id}')">Edit Route</button>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn-warning" style="padding:4px 8px; font-size:0.8rem;" onclick="editRoute('${route.route_id}')">Edit</button>
+                            <button class="btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteRoute('${route.route_id}')">Delete</button>
+                        </div>
                     </div>`;
                 
                 if (!isCollapsed) {
@@ -323,7 +344,7 @@
                         const isEditingStops = (trip.trip_id === editingTripId);
                         const isHidden = tripHidden[trip.trip_id] !== false; // hidden by default
                         
-                        const seqSource = isDraft ? tempSequence : trip.stop_sequence;
+                        const seqSource = isDraft ? tempSequence : (trip.stop_sequence || []);
                         const sequenceHtml = seqSource.map((seq, idx) => {
                             const stopName = stops.find(s => s.id === seq.stop_id)?.name || 'Unknown Stop';
                             if (isEditingStops) {
