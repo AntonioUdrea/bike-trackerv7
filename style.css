@@ -347,12 +347,12 @@ body.darkMode .driverDisplay .headerStatus {
 }
 
 body.darkMode .routeBox {
-    background: orange;   /* Change later to your preferred colour */
+    background: #FF7A00;   /* Change later to your preferred colour */
     color: white;
 }
 
 body.darkMode .plateBox {
-    background: orange;
+    background: #FF7A00;
     color: white;
 }
 
