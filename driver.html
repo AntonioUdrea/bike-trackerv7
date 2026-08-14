@@ -4,6 +4,7 @@
 <head>
     <title>Driver</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getDatabase, ref, set, push, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -22,7 +23,7 @@
         const db = getDatabase(app);
         const busRef = ref(db, 'bus');
         onDisconnect(busRef).set({ active: false });
-
+        
         // Global State Variables
         let masterData = { stops: [], routes: [], trips: [], departures: [] };
         let watchId = null;
@@ -40,6 +41,7 @@
         let stopLog = [];
         let currentLateness = '0';
         let currentDepId = null;
+        let visibilityListenerAdded = false;
 
         // New state tracking for dwell/bubble mechanics
         let isAtStop = false;
@@ -47,20 +49,32 @@
         let isIdleStandby = false; // Tracks if driver is on the empty end-of-day standby screen
 
         function updateHeader() {
-            const now = new Date();
-            const months = ['ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'];
-            const day = now.getDate();
-            const month = months[now.getMonth()];
-            const hours = now.getHours().toString().padStart(2, '0');
-            const mins = now.getMinutes().toString().padStart(2, '0');
-            const text = `${day} ${month}, ${hours}:${mins}`;
-            const el1 = document.getElementById('headerDate');
-            const el2 = document.getElementById('headerDate2');
-            if (el1) el1.textContent = text;
-            if (el2) el2.textContent = text;
-        }
-        updateHeader();
-        setInterval(updateHeader, 1000);
+                const now = new Date();
+                const months = ['ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'];
+                const day = now.getDate();
+                const month = months[now.getMonth()];
+                const hours = now.getHours().toString().padStart(2, '0');
+                const mins = now.getMinutes().toString().padStart(2, '0');
+                const text = `${day} ${month}, ${hours}:${mins}`;
+                const el1 = document.getElementById('headerDate');
+                const el2 = document.getElementById('headerDate2');
+                if (el1) el1.textContent = text;
+                if (el2) el2.textContent = text;
+            }
+            updateHeader();
+            setInterval(updateHeader, 1000);
+
+            function updateTheme(lat, lng) {
+
+                const now = new Date();
+                const sun = SunCalc.getTimes(now, lat, lng);
+
+                const isNight =
+                    now < sun.sunrise ||
+                    now > sun.sunset;
+
+                document.body.classList.toggle("darkMode", isNight);
+            }
 
         window.showRouteList = function () {
             const list = document.getElementById('routeList');
@@ -146,12 +160,14 @@
             tripStartTime = null;
             tripDate = new Date().toISOString().slice(0, 10);
             stopLog = [];
+            isAtStop = false;
+            activeStopIndex = null;
+            currentStopIndex = 0;
+            isIdleStandby = false;
 
             document.getElementById('screen2').style.display = 'none';
             document.getElementById('driverScreen').style.display = 'flex';
             document.querySelector('.leftPanel').style.display = 'flex';
-
-            currentStopIndex = 0;
             renderStops();
             startTracking();
         }
@@ -195,10 +211,12 @@
 
         function startTracking() {
             if (!navigator.geolocation) return;
+            if (watchId !== null) return;
             requestWakeLock();
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
+                    updateTheme(latitude, longitude);
                     const timeStr = new Date().toTimeString().slice(0, 8);
                     if (!tripStartTime) tripStartTime = timeStr;
                     if (tripTrack.length > 0) {
@@ -218,13 +236,25 @@
                 },
                 { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
             );
-            timerInterval = setInterval(() => renderStops(), 5000);
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') {
-                    requestWakeLock();
-                    if (watchId === null && routeStops.length > 0) startTracking();
-                }
-            });
+            timerInterval = setInterval(renderStops, 5000);
+
+            if (!visibilityListenerAdded) {
+                visibilityListenerAdded = true;
+
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        requestWakeLock();
+
+                        if (
+                            watchId === null &&
+                            routeStops.length > 0 &&
+                            !isIdleStandby
+                        ) {
+                            startTracking();
+                        }
+                    }
+                });
+            }
         }
 
         function pushToFirebase(lat, lng) {
@@ -249,10 +279,9 @@
             });
         }
 
-        window.endRoute = function () {
-            saveTrip();
-            stopAllTracking();
-            set(busRef, { active: false });
+        window.endRoute = async function () {
+            await saveTrip();
+            await set(busRef, { active:false });
             routeStops = [];
             currentStopIndex = 0;
             stopLog = [];
@@ -265,13 +294,13 @@
             showRouteList();
         }
 
-        function saveTrip() {
+        async function saveTrip() {
             if (tripTrack.length < 2) return;
             const endTime = new Date().toTimeString().slice(0, 8);
             const tripKey = `${tripDate}_${currentRouteId}_${departureTime.replace(':', '')}`;
             const tripsRef = ref(db, `trips/${tripKey}`);
 
-            set(tripsRef, {
+            await set(tripsRef, {
                 routeName: currentRouteName,
                 routeId: currentRouteId,
                 date: tripDate,
@@ -314,6 +343,12 @@
             } else {
                 // Phase 2: The bus was dwelling at a stop, check if it has now LEFT the radius
                 const activeStop = routeStops[activeStopIndex];
+
+                if (!activeStop) {
+                    isAtStop = false;
+                    activeStopIndex = null;
+                    return;
+                }
                 const distance = getDistance(latlng, [activeStop.lat, activeStop.lng]);
 
                 if (distance > radiusThreshold) {
@@ -352,19 +387,32 @@
         }
 
         // Handles what happens when a trip reaches its final destination
-        function handleRouteCompletion() {
-            saveTrip();
-            stopAllTracking();
-            set(busRef, { active: false });
+        async function handleRouteCompletion() {
 
-            // Look for explicitly linked next shift
+            await saveTrip();
+
+            stopAllTracking();
+
+            await set(busRef, {
+                active: false
+            });
+
             const nextDepInfo = findNextScheduledDeparture();
 
             if (nextDepInfo) {
-                // Switch seamlessly to the exact next shift
+
+                // completely reset previous trip state
+
+                isAtStop = false;
+                activeStopIndex = null;
+                currentStopIndex = 0;
+
                 selectRoute(nextDepInfo, nextDepInfo.routeId);
+
             } else {
+
                 enterIdleStandbyScreen();
+
             }
         }
 
@@ -475,6 +523,7 @@
             }
         });
     </script>
+    
 </head>
 
 <body>
