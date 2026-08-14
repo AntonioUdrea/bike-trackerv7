@@ -1,38 +1,165 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Editor</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: sans-serif; background: #111; color: white; }
-        #map { flex: 1; height: 100%; }
-        #sidebar { width: 420px; background: #222; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
-        
-        .tabs { display: flex; margin-bottom: 15px; border-bottom: 2px solid #444; flex-shrink: 0; }
-        .tab-btn { flex: 1; padding: 10px; background: none; border: none; color: #888; cursor: pointer; font-weight: bold; font-size: 1rem; }
-        .tab-btn.active { color: white; border-bottom: 2px solid #007bff; margin-bottom: -2px; }
-        .tab-content { display: none; flex: 1; overflow-y: auto; }
-        .tab-content.active { display: block; }
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            font-family: sans-serif;
+            background: #111;
+            color: white;
+        }
 
-        h3 { margin-top: 0; font-size: 1.1rem; color: #ddd; }
-        .item-box { background: #333; padding: 12px; margin-bottom: 12px; border-radius: 5px; }
-        
-        input[type="text"], input[type="time"] { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; background: #111; border: 1px solid #444; color: white; border-radius: 4px; }
-        button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
-        button:hover { opacity: 0.8; }
-        
-        .btn-primary { background: #007bff; color: white; width: 100%; margin-bottom: 10px; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-warning { background: #ffc107; color: black; }
-        
-        .drawing-indicator { background: #ffc107; color: black; padding: 10px; border-radius: 4px; font-weight: bold; text-align: center; margin-bottom: 15px; display: none; }
-        .stop-sequence-item { font-size: 0.9rem; padding: 6px 0; border-bottom: 1px solid #444; display: flex; justify-content: space-between;}
-        
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; }
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        #sidebar {
+            width: 420px;
+            background: #222;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #444;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .tab-btn.active {
+            color: white;
+            border-bottom: 2px solid #007bff;
+            margin-bottom: -2px;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: #ddd;
+        }
+
+        .item-box {
+            background: #333;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+        }
+
+        input[type="text"],
+        input[type="time"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            background: #111;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .drawing-indicator {
+            background: #ffc107;
+            color: black;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .stop-sequence-item {
+            font-size: 0.9rem;
+            padding: 6px 0;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
     </style>
 </head>
+
 <body>
 
     <div id="loadingOverlay">Loading Cloud Data...</div>
@@ -41,6 +168,7 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('stops')">Stops</button>
             <button class="tab-btn" onclick="switchTab('routes')">Routes & Trips</button>
+            <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
         </div>
 
         <div id="stopsTab" class="tab-content active">
@@ -49,7 +177,8 @@
         </div>
 
         <div id="routesTab" class="tab-content">
-            <div id="drawingModeAlert" class="drawing-indicator"><br><small>Click map to draw path. Click stops to add to sequence.</small>
+            <div id="drawingModeAlert" class="drawing-indicator"><br><small>Click map to draw path. Click stops to add
+                    to sequence.</small>
             </div>
             <div id="routeManager">
                 <h3>Create New Route</h3>
@@ -61,11 +190,31 @@
             <div id="routesList"></div>
         </div>
 
+        <div id="settingsTab" class="tab-content">
+
+            <div class="item-box">
+
+                <h3>Driver Display</h3>
+
+                <label>Night mode starts</label>
+
+                <input type="time" id="nightStart" value="20:30">
+
+                <label>Day mode starts</label>
+
+                <input type="time" id="dayStart" value="06:30">
+
+            </div>
+
+        </div>
+
         <div style="display: flex; gap: 10px; margin-top: 15px; flex-shrink: 0; flex-direction: column;">
-            <button class="btn-warning" style="padding: 15px; font-size: 1.1rem;" onclick="syncToCloud()">Sync to Firebase</button>
+            <button class="btn-warning" style="padding: 15px; font-size: 1.1rem;" onclick="syncToCloud()">Sync to
+                Firebase</button>
             <div style="display: flex; gap: 10px;">
                 <button class="btn-success" style="flex: 1;" onclick="exportData()">Backup JSON</button>
-                <button class="btn-primary" style="flex: 1;" onclick="document.getElementById('importFile').click()">Import JSON</button>
+                <button class="btn-primary" style="flex: 1;"
+                    onclick="document.getElementById('importFile').click()">Import JSON</button>
                 <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
             </div>
         </div>
@@ -94,46 +243,68 @@
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
         let stops = [], routes = [], trips = [], departures = [];
+        let settings = {
+            nightStart: "20:30",
+            dayStart: "06:30"
+        };
         let stopMarkers = {}, mapMode = 'stops';
         let activeTripId = null, tempShape = [], tempSequence = [], tempPolyline = null;
-        
+
         // UI State Variables - default to collapsed routes and hidden shapes
-        let routeCollapsed = {}; 
+        let routeCollapsed = {};
         let tripHidden = {};
-        let editingTripId = null; 
+        let editingTripId = null;
 
         async function loadFromCloud() {
             try {
                 const snapshot = await get(ref(db, 'master_transit_data'));
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    stops = data.stops || []; 
+                    stops = data.stops || [];
                     routes = data.routes || [];
-                    trips = data.trips || []; 
+                    trips = data.trips || [];
                     departures = data.departures || [];
+                    settings = data.settings || settings;
+
+                    document.getElementById("nightStart").value =
+                        settings.nightStart;
+
+                    document.getElementById("dayStart").value =
+                        settings.dayStart;
                 }
-                
+
                 // Ensure default states: routes collapsed, shapes hidden
                 routes.forEach(r => { if (routeCollapsed[r.route_id] === undefined) routeCollapsed[r.route_id] = true; });
                 trips.forEach(t => { if (tripHidden[t.trip_id] === undefined) tripHidden[t.trip_id] = true; });
 
                 refreshUI();
-            } catch (e) { 
-                console.error("Error loading data from Firebase:", e); 
-            } finally { 
-                document.getElementById('loadingOverlay').style.display = 'none'; 
+            } catch (e) {
+                console.error("Error loading data from Firebase:", e);
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
             }
         }
         window.addEventListener('DOMContentLoaded', loadFromCloud);
 
-        window.syncToCloud = async function() {
+        window.syncToCloud = async function () {
             const pass = prompt("Enter Admin Passcode:");
             if (pass !== EDITOR_PASSCODE) return alert("Incorrect passcode.");
             document.getElementById('loadingOverlay').style.display = 'flex';
             try {
-                await set(ref(db, 'master_transit_data'), { stops, routes, trips, departures });
+                settings.nightStart =
+                    document.getElementById("nightStart").value;
+
+                settings.dayStart =
+                    document.getElementById("dayStart").value;
+                await set(ref(db, 'master_transit_data'), {
+                    stops,
+                    routes,
+                    trips,
+                    departures,
+                    settings
+                });
                 alert("Successfully synced to Firebase!");
-            } catch(e) { alert("Failed to sync."); } 
+            } catch (e) { alert("Failed to sync."); }
             finally { document.getElementById('loadingOverlay').style.display = 'none'; }
         }
 
@@ -142,7 +313,7 @@
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             event.target.classList.add('active');
             document.getElementById(tab + 'Tab').classList.add('active');
-            if(tab === 'stops' && mapMode === 'drawing_trip') window.cancelDrawing();
+            if (tab === 'stops' && mapMode === 'drawing_trip') window.cancelDrawing();
         }
 
         map.on('click', (e) => {
@@ -151,7 +322,7 @@
                 if (name) { stops.push({ id: 'stop_' + Date.now(), name, lat: e.latlng.lat, lng: e.latlng.lng }); refreshUI(); }
             } else if (mapMode === 'drawing_trip') {
                 tempShape.push([e.latlng.lat, e.latlng.lng]);
-                if(tempPolyline) tempPolyline.setLatLngs(tempShape);
+                if (tempPolyline) tempPolyline.setLatLngs(tempShape);
             }
         });
 
@@ -161,7 +332,7 @@
                 if (travelMins !== null) { tempSequence.push({ stop_id: stop.id, travel_minutes_from_start: parseInt(travelMins) }); window.renderRoutes(); }
             } else if (mapMode === 'editing_stops' && editingTripId) {
                 const trip = trips.find(t => t.trip_id === editingTripId);
-                if(trip) {
+                if (trip) {
                     const travelMins = prompt(`Minutes from start to added stop (${stop.name}):`, "0");
                     if (travelMins !== null) {
                         trip.stop_sequence.push({ stop_id: stop.id, travel_minutes_from_start: parseInt(travelMins) });
@@ -180,7 +351,7 @@
         window.drawMarkers = () => {
             Object.values(stopMarkers).forEach(m => map.removeLayer(m)); stopMarkers = {};
             stops.forEach(stop => {
-                const marker = L.marker([stop.lat, stop.lng]).addTo(map).bindTooltip(stop.name, {permanent: true, direction: 'top'});
+                const marker = L.marker([stop.lat, stop.lng]).addTo(map).bindTooltip(stop.name, { permanent: true, direction: 'top' });
                 marker.on('click', () => handleStopClick(stop)); stopMarkers[stop.id] = marker;
             });
         }
@@ -189,12 +360,12 @@
         window.createRoute = () => {
             const id = document.getElementById('routeId').value.trim();
             const name = document.getElementById('routeName').value.trim();
-            if(id && name) { 
-                routes.push({ route_id: id, name }); 
+            if (id && name) {
+                routes.push({ route_id: id, name });
                 routeCollapsed[id] = true; // collapsed by default
                 document.getElementById('routeId').value = '';
                 document.getElementById('routeName').value = '';
-                refreshUI(); 
+                refreshUI();
             }
         }
 
@@ -215,19 +386,19 @@
         }
 
         window.deleteRoute = (routeId) => {
-            if(confirm(`Are you sure you want to permanently delete Line ${routeId}? This will delete all associated trips and departures.`)) {
+            if (confirm(`Are you sure you want to permanently delete Line ${routeId}? This will delete all associated trips and departures.`)) {
                 // Find all trips belonging to this route
                 const tripsToDelete = trips.filter(t => t.route_id === routeId).map(t => t.trip_id);
-                
+
                 // Remove the route
                 routes = routes.filter(r => r.route_id !== routeId);
-                
+
                 // Remove the associated trips
                 trips = trips.filter(t => t.route_id !== routeId);
-                
+
                 // Remove departures associated with those deleted trips
                 departures = departures.filter(d => !tripsToDelete.includes(d.trip_id));
-                
+
                 refreshUI();
             }
         }
@@ -245,12 +416,12 @@
 
         window.startDrawingTrip = (routeId) => {
             const tripName = prompt("Trip Name (e.g. TUR, RETUR):");
-            if(!tripName) return;
+            if (!tripName) return;
             mapMode = 'drawing_trip'; activeTripId = 'trip_' + Date.now(); tempShape = []; tempSequence = [];
-            if(tempPolyline) map.removeLayer(tempPolyline);
-            tempPolyline = L.polyline([], {color: '#007bff', weight: 4}).addTo(map);
+            if (tempPolyline) map.removeLayer(tempPolyline);
+            tempPolyline = L.polyline([], { color: '#007bff', weight: 4 }).addTo(map);
             document.getElementById('drawingModeAlert').style.display = 'block';
-            
+
             const newTripId = activeTripId;
             trips.push({ trip_id: newTripId, route_id: routeId, name: tripName, shape: [], stop_sequence: [] });
             tripHidden[newTripId] = true; // hidden by default
@@ -259,11 +430,11 @@
 
         window.saveDrawing = () => {
             const trip = trips.find(t => t.trip_id === activeTripId);
-            if(trip) { trip.shape = [...tempShape]; trip.stop_sequence = [...tempSequence]; }
+            if (trip) { trip.shape = [...tempShape]; trip.stop_sequence = [...tempSequence]; }
             endDrawingMode();
         }
         window.cancelDrawing = () => { trips = trips.filter(t => t.trip_id !== activeTripId); endDrawingMode(); }
-        function endDrawingMode() { mapMode = 'stops'; activeTripId = null; document.getElementById('drawingModeAlert').style.display = 'none'; if(tempPolyline) map.removeLayer(tempPolyline); refreshUI(); }
+        function endDrawingMode() { mapMode = 'stops'; activeTripId = null; document.getElementById('drawingModeAlert').style.display = 'none'; if (tempPolyline) map.removeLayer(tempPolyline); refreshUI(); }
 
         window.toggleEditTripStops = (tripId) => {
             if (editingTripId === tripId) {
@@ -281,14 +452,14 @@
 
         window.updateStopSequenceTime = (tripId, index, newTime) => {
             const trip = trips.find(t => t.trip_id === tripId);
-            if(trip && trip.stop_sequence[index]) {
+            if (trip && trip.stop_sequence[index]) {
                 trip.stop_sequence[index].travel_minutes_from_start = parseInt(newTime) || 0;
             }
         }
 
         window.removeStopFromTrip = (tripId, index) => {
             const trip = trips.find(t => t.trip_id === tripId);
-            if(trip) {
+            if (trip) {
                 trip.stop_sequence.splice(index, 1);
                 window.renderRoutes();
             }
@@ -297,28 +468,28 @@
         window.addDeparture = (tripId) => {
             const timeInput = document.getElementById('time_' + tripId);
             const time = timeInput ? timeInput.value : null;
-            if(time) { 
-                departures.push({ id: 'dep_' + Date.now(), trip_id: tripId, time, next_dep_id: "" }); 
-                window.renderRoutes(); 
+            if (time) {
+                departures.push({ id: 'dep_' + Date.now(), trip_id: tripId, time, next_dep_id: "" });
+                window.renderRoutes();
             }
         }
         window.deleteDeparture = (depId) => { departures = departures.filter(d => d.id !== depId); window.renderRoutes(); }
-        
+
         window.updateNextDeparture = (depId, nextDepId) => {
             const dep = departures.find(d => d.id === depId);
-            if(dep) dep.next_dep_id = nextDepId;
+            if (dep) dep.next_dep_id = nextDepId;
         }
 
         window.toggleRouteCollapse = (rId) => { routeCollapsed[rId] = !routeCollapsed[rId]; window.renderRoutes(); }
-        window.toggleTripShape = (tId) => { 
-            tripHidden[tId] = !tripHidden[tId]; 
-            window.drawTripShapes(); 
-            window.renderRoutes(); 
+        window.toggleTripShape = (tId) => {
+            tripHidden[tId] = !tripHidden[tId];
+            window.drawTripShapes();
+            window.renderRoutes();
         }
 
         window.renderRoutes = () => {
             const list = document.getElementById('routesList'); list.innerHTML = '';
-            
+
             const allDepsList = departures.map(d => {
                 const t = trips.find(trip => trip.trip_id === d.trip_id);
                 const r = t ? routes.find(route => route.route_id === t.route_id) : null;
@@ -335,21 +506,21 @@
                             <button class="btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteRoute('${route.route_id}')">Delete</button>
                         </div>
                     </div>`;
-                
+
                 if (!isCollapsed) {
                     html += `<div style="margin-top:15px;"><button class="btn-primary" onclick="startDrawingTrip('${route.route_id}')">+ Add Trip</button></div>`;
-                    
+
                     trips.filter(t => t.route_id === route.route_id).forEach(trip => {
                         const isDraft = (trip.trip_id === activeTripId);
                         const isEditingStops = (trip.trip_id === editingTripId);
                         const isHidden = tripHidden[trip.trip_id] !== false; // hidden by default
-                        
+
                         const seqSource = isDraft ? tempSequence : (trip.stop_sequence || []);
                         const sequenceHtml = seqSource.map((seq, idx) => {
                             const stopName = stops.find(s => s.id === seq.stop_id)?.name || 'Unknown Stop';
                             if (isEditingStops) {
                                 return `<div class="stop-sequence-item" style="display:flex; justify-content:space-between; align-items:center; gap:5px; margin-bottom:4px;">
-                                    <span style="color:#fff; font-size:0.9rem;">${idx+1}. ${stopName}</span>
+                                    <span style="color:#fff; font-size:0.9rem;">${idx + 1}. ${stopName}</span>
                                     <div style="display:flex; align-items:center; gap:4px;">
                                         <input type="number" value="${seq.travel_minutes_from_start}" style="width:50px; padding:2px; font-size:0.8rem; background:#222; color:#fff; border:1px solid #444;" onchange="updateStopSequenceTime('${trip.trip_id}', ${idx}, this.value)">
                                         <span style="font-size:0.8rem; color:#aaa;">min</span>
@@ -357,12 +528,12 @@
                                     </div>
                                 </div>`;
                             } else {
-                                return `<div class="stop-sequence-item"><span>${idx+1}. ${stopName}</span><span style="color:#aaa;">+${seq.travel_minutes_from_start}m</span></div>`;
+                                return `<div class="stop-sequence-item"><span>${idx + 1}. ${stopName}</span><span style="color:#aaa;">+${seq.travel_minutes_from_start}m</span></div>`;
                             }
                         }).join('');
-                        
-                        const depsHtml = departures.filter(d => d.trip_id === trip.trip_id).sort((a,b)=>a.time.localeCompare(b.time)).map(d => {
-                            const optionsHtml = allDepsList.map(opt => 
+
+                        const depsHtml = departures.filter(d => d.trip_id === trip.trip_id).sort((a, b) => a.time.localeCompare(b.time)).map(d => {
+                            const optionsHtml = allDepsList.map(opt =>
                                 opt.id !== d.id ? `<option value="${opt.id}" ${d.next_dep_id === opt.id ? 'selected' : ''}>${opt.label}</option>` : ''
                             ).join('');
 
@@ -396,7 +567,7 @@
                                     <strong style="font-size: 0.85rem; color: #aaa;">ROUTE STOPS (${seqSource.length}):</strong>
                                     ${sequenceHtml || '<div style="color:#666; font-size:0.85rem; margin-top:5px;">No stops added yet.</div>'}
                                 </div>
-                                ${isDraft ? `<div style="margin-top:10px; display:flex; gap:5px;"><button class="btn-success" style="flex:1" onclick="saveDrawing()">Save Path</button><button class="btn-danger" style="flex:1" onclick="cancelDrawing()">Cancel</button></div>` 
+                                ${isDraft ? `<div style="margin-top:10px; display:flex; gap:5px;"><button class="btn-success" style="flex:1" onclick="saveDrawing()">Save Path</button><button class="btn-danger" style="flex:1" onclick="cancelDrawing()">Cancel</button></div>`
                                 : `<div style="margin-top: 15px;"><strong style="font-size: 0.85rem; color: #aaa;">DEPARTURES & SCHEDULES:</strong><div style="margin: 8px 0;">${depsHtml}</div>
                                    <div style="display:flex; gap:5px;"><input type="time" id="time_${trip.trip_id}" style="margin:0;"><button class="btn-success" style="width:auto; padding: 0 15px;" onclick="addDeparture('${trip.trip_id}')">Add</button></div></div>`}
                             </div>`;
@@ -411,8 +582,8 @@
             savedPolylines.forEach(p => map.removeLayer(p)); savedPolylines = [];
             trips.forEach(trip => {
                 // Ensure shape is valid and not hidden by default
-                if(trip.shape && trip.shape.length > 0 && trip.trip_id !== activeTripId && !tripHidden[trip.trip_id]) {
-                    savedPolylines.push(L.polyline(trip.shape, {color: '#cc0000', weight: 4, opacity: 0.6}).addTo(map));
+                if (trip.shape && trip.shape.length > 0 && trip.trip_id !== activeTripId && !tripHidden[trip.trip_id]) {
+                    savedPolylines.push(L.polyline(trip.shape, { color: '#cc0000', weight: 4, opacity: 0.6 }).addTo(map));
                 }
             });
         }
@@ -430,10 +601,11 @@
                 stops = data.stops || []; routes = data.routes || []; trips = data.trips || []; departures = data.departures || [];
                 routes.forEach(r => { if (routeCollapsed[r.route_id] === undefined) routeCollapsed[r.route_id] = true; });
                 trips.forEach(t => { if (tripHidden[t.trip_id] === undefined) tripHidden[t.trip_id] = true; });
-                refreshUI(); document.getElementById('importFile').value = ''; 
+                refreshUI(); document.getElementById('importFile').value = '';
             };
             reader.readAsText(file);
         }
     </script>
 </body>
+
 </html>
