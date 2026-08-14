@@ -4,7 +4,6 @@
 <head>
     <title>Driver</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getDatabase, ref, set, push, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -23,7 +22,7 @@
         const db = getDatabase(app);
         const busRef = ref(db, 'bus');
         onDisconnect(busRef).set({ active: false });
-        
+
         // Global State Variables
         let masterData = { stops: [], routes: [], trips: [], departures: [] };
         let watchId = null;
@@ -42,6 +41,10 @@
         let currentLateness = '0';
         let currentDepId = null;
         let visibilityListenerAdded = false;
+        let settings = {
+                nightStart: "20:30",
+                dayStart: "06:30"
+            };
 
         // New state tracking for dwell/bubble mechanics
         let isAtStop = false;
@@ -49,32 +52,47 @@
         let isIdleStandby = false; // Tracks if driver is on the empty end-of-day standby screen
 
         function updateHeader() {
-                const now = new Date();
-                const months = ['ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'];
-                const day = now.getDate();
-                const month = months[now.getMonth()];
-                const hours = now.getHours().toString().padStart(2, '0');
-                const mins = now.getMinutes().toString().padStart(2, '0');
-                const text = `${day} ${month}, ${hours}:${mins}`;
-                const el1 = document.getElementById('headerDate');
-                const el2 = document.getElementById('headerDate2');
-                if (el1) el1.textContent = text;
-                if (el2) el2.textContent = text;
-            }
-            updateHeader();
-            setInterval(updateHeader, 1000);
+            const now = new Date();
+            const months = ['ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'];
+            const day = now.getDate();
+            const month = months[now.getMonth()];
+            const hours = now.getHours().toString().padStart(2, '0');
+            const mins = now.getMinutes().toString().padStart(2, '0');
+            const text = `${day} ${month}, ${hours}:${mins}`;
+            const el1 = document.getElementById('headerDate');
+            const el2 = document.getElementById('headerDate2');
+            if (el1) el1.textContent = text;
+            if (el2) el2.textContent = text;
+        }
+        updateHeader();
+        setInterval(updateHeader, 1000);
+        function updateTheme() {
 
-            function updateTheme(lat, lng) {
+            const now = new Date();
 
-                const now = new Date();
-                const sun = SunCalc.getTimes(now, lat, lng);
+            const currentMinutes =
+                now.getHours() * 60 +
+                now.getMinutes();
 
-                const isNight =
-                    now < sun.sunrise ||
-                    now > sun.sunset;
+            const [nightHour, nightMinute] =
+                settings.nightStart.split(":").map(Number);
 
-                document.body.classList.toggle("darkMode", isNight);
-            }
+            const [dayHour, dayMinute] =
+                settings.dayStart.split(":").map(Number);
+
+            const nightMinutes =
+                nightHour * 60 + nightMinute;
+
+            const dayMinutes =
+                dayHour * 60 + dayMinute;
+
+            const dark =
+                currentMinutes >= nightMinutes ||
+                currentMinutes < dayMinutes;
+
+            document.body.classList.toggle("darkMode", dark);
+        }
+
 
         window.showRouteList = function () {
             const list = document.getElementById('routeList');
@@ -281,7 +299,7 @@
 
         window.endRoute = async function () {
             await saveTrip();
-            await set(busRef, { active:false });
+            await set(busRef, { active: false });
             routeStops = [];
             currentStopIndex = 0;
             stopLog = [];
@@ -515,15 +533,18 @@
                     masterData.routes = masterData.routes || [];
                     masterData.trips = masterData.trips || [];
                     masterData.departures = masterData.departures || [];
+                    settings = masterData.settings || settings;
                 }
                 showRouteList();
+                updateTheme();
+                setInterval(updateTheme, 60000);
             } catch (e) {
                 console.error("Failed to load cloud data:", e);
                 document.getElementById('routeList').innerHTML = '<div style="color:white; padding:20px;">Failed to load data from Firebase.</div>';
             }
         });
     </script>
-    
+
 </head>
 
 <body>
