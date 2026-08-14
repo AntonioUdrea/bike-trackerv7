@@ -1,30 +1,18 @@
 @font-face {
-    font-family: DejaVuSans;
-    src: url(DejaVuSans-Bold.ttf);
+  font-family: DejaVuSans; 
+  src: url(DejaVuSans-Bold.ttf);
 }
 
-/* GLOBAL RESET */
 * {
+    font-family: DejaVuSans !important;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    border-radius: 0 !important;
 }
 
-/* APP FONT + SHARP CORNERS */
-body {
-    font-family: DejaVuSans;
-}
-
-body * {
-    font-family: inherit;
-    border-radius: 0;
-}
-
-/* RESTORE LEAFLET DEFAULTS */
-.leaflet-container,
-.leaflet-container * {
-    font-family: sans-serif !important;
-    border-radius: revert !important;
+.leaflet-container, .leaflet-container * {
+    font-family: initial !important;
+    border-radius: initial !important;
 }
 
 html, body {
@@ -339,4 +327,44 @@ html, body {
     padding: 10px 20px;
     font-size: 1.2rem;
     font-weight: bold;
+}
+
+/* ===================== */
+/* DRIVER NIGHT MODE     */
+/* ===================== */
+
+body.darkMode .driverDisplay {
+    background: #000;
+    color: white;
+}
+
+body.darkMode .driverDisplay .headerDate {
+    color: white;
+}
+
+body.darkMode .driverDisplay .headerStatus {
+    color: #ccc;
+}
+
+body.darkMode .routeBox {
+    background: orange;   /* Change later to your preferred colour */
+    color: white;
+}
+
+body.darkMode .plateBox {
+    background: orange;
+    color: white;
+}
+
+body.darkMode .latenessDisplay {
+    color: white;
+}
+
+body.darkMode .stopRow {
+    color: white;
+}
+
+body.darkMode .stopRow.nextStop {
+    background: #555;      /* Grey current stop */
+    color: white;
 }
