@@ -254,6 +254,7 @@
         let routeCollapsed = {};
         let tripHidden = {};
         let editingTripId = null;
+        let editingPathTripId = null;
 
         async function loadFromCloud() {
             try {
@@ -314,13 +315,14 @@
             event.target.classList.add('active');
             document.getElementById(tab + 'Tab').classList.add('active');
             if (tab === 'stops' && mapMode === 'drawing_trip') window.cancelDrawing();
+            if (tab === 'stops' && mapMode === 'editing_path') window.cancelEditedPath();
         }
 
         map.on('click', (e) => {
             if (mapMode === 'stops') {
                 const name = prompt("Stop name:");
                 if (name) { stops.push({ id: 'stop_' + Date.now(), name, lat: e.latlng.lat, lng: e.latlng.lng }); refreshUI(); }
-            } else if (mapMode === 'drawing_trip') {
+            } else if (mapMode === 'drawing_trip' || mapMode === 'editing_path') {
                 tempShape.push([e.latlng.lat, e.latlng.lng]);
                 if (tempPolyline) tempPolyline.setLatLngs(tempShape);
             }
@@ -434,9 +436,62 @@
             endDrawingMode();
         }
         window.cancelDrawing = () => { trips = trips.filter(t => t.trip_id !== activeTripId); endDrawingMode(); }
-        function endDrawingMode() { mapMode = 'stops'; activeTripId = null; document.getElementById('drawingModeAlert').style.display = 'none'; if (tempPolyline) map.removeLayer(tempPolyline); refreshUI(); }
+
+        window.startEditingTripPath = (tripId) => {
+            const trip = trips.find(t => t.trip_id === tripId);
+            if (!trip) return;
+
+            if (activeTripId) return alert('Finish or cancel the trip you are currently drawing first.');
+
+            editingTripId = null;
+            editingPathTripId = tripId;
+            mapMode = 'editing_path';
+            tempShape = (trip.shape || []).map(point => [point[0], point[1]]);
+
+            if (tempPolyline) map.removeLayer(tempPolyline);
+            tempPolyline = L.polyline(tempShape, { color: '#ffc107', weight: 5, opacity: 0.9 }).addTo(map);
+
+            document.getElementById('drawingModeAlert').innerHTML = '<b>[EDITING PATH]</b><br><small>Click the map to add points to a replacement path. Use Undo Point if needed, then Save Path.</small>';
+            document.getElementById('drawingModeAlert').style.display = 'block';
+            window.drawTripShapes();
+            window.renderRoutes();
+        }
+
+        window.undoPathPoint = () => {
+            if (mapMode !== 'editing_path' || !editingPathTripId || tempShape.length === 0) return;
+            tempShape.pop();
+            if (tempPolyline) tempPolyline.setLatLngs(tempShape);
+        }
+
+        window.clearEditedPath = () => {
+            if (mapMode !== 'editing_path' || !editingPathTripId) return;
+            tempShape = [];
+            if (tempPolyline) tempPolyline.setLatLngs(tempShape);
+        }
+
+        window.saveEditedPath = () => {
+            const trip = trips.find(t => t.trip_id === editingPathTripId);
+            if (trip) trip.shape = tempShape.map(point => [point[0], point[1]]);
+            endPathEditingMode();
+        }
+
+        window.cancelEditedPath = () => {
+            endPathEditingMode();
+        }
+
+        function endPathEditingMode() {
+            mapMode = 'stops';
+            editingPathTripId = null;
+            tempShape = [];
+            document.getElementById('drawingModeAlert').style.display = 'none';
+            if (tempPolyline) { map.removeLayer(tempPolyline); tempPolyline = null; }
+            refreshUI();
+        }
+
+        function endDrawingMode() { mapMode = 'stops'; activeTripId = null; document.getElementById('drawingModeAlert').style.display = 'none'; if (tempPolyline) { map.removeLayer(tempPolyline); tempPolyline = null; } refreshUI(); }
 
         window.toggleEditTripStops = (tripId) => {
+            if (editingPathTripId) return alert('Save or cancel the path edit first.');
             if (editingTripId === tripId) {
                 editingTripId = null;
                 mapMode = 'stops';
@@ -513,6 +568,7 @@
                     trips.filter(t => t.route_id === route.route_id).forEach(trip => {
                         const isDraft = (trip.trip_id === activeTripId);
                         const isEditingStops = (trip.trip_id === editingTripId);
+                        const isEditingPath = (trip.trip_id === editingPathTripId);
                         const isHidden = tripHidden[trip.trip_id] !== false; // hidden by default
 
                         const seqSource = isDraft ? tempSequence : (trip.stop_sequence || []);
@@ -558,8 +614,9 @@
                                         <strong style="font-size: 1.1rem; color: #007bff;">${trip.name}</strong>
                                         <button class="btn-warning" style="padding:2px 6px; font-size:0.75rem;" onclick="editTripName('${trip.trip_id}')">Edit</button>
                                     </div>
-                                    <div style="display:flex; gap:5px;">
+                                    <div style="display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end;">
                                         <button class="btn-warning" style="padding:4px 8px; font-size:0.8rem;" onclick="toggleTripShape('${trip.trip_id}')">${isHidden ? 'show path' : 'hide path'}</button>
+                                        <button class="btn-warning" style="padding:4px 8px; font-size:0.8rem; background:${isEditingPath ? '#28a745' : '#ffc107'}; color:${isEditingPath ? '#fff' : '#000'};" onclick="startEditingTripPath('${trip.trip_id}')" ${isEditingPath ? 'disabled' : ''}>${isEditingPath ? 'Editing Path' : 'Edit Path'}</button>
                                         <button class="btn-primary" style="padding:4px 8px; font-size:0.8rem; background:${isEditingStops ? '#28a745' : '#007bff'}" onclick="toggleEditTripStops('${trip.trip_id}')">${isEditingStops ? 'Save Stop Order' : 'Edit Stops'}</button>
                                     </div>
                                 </div>
@@ -568,6 +625,7 @@
                                     ${sequenceHtml || '<div style="color:#666; font-size:0.85rem; margin-top:5px;">No stops added yet.</div>'}
                                 </div>
                                 ${isDraft ? `<div style="margin-top:10px; display:flex; gap:5px;"><button class="btn-success" style="flex:1" onclick="saveDrawing()">Save Path</button><button class="btn-danger" style="flex:1" onclick="cancelDrawing()">Cancel</button></div>`
+                                : isEditingPath ? `<div style="margin-top:10px; display:flex; gap:5px; flex-wrap:wrap;"><button class="btn-warning" style="flex:1" onclick="undoPathPoint()">Undo Point</button><button class="btn-danger" style="flex:1" onclick="clearEditedPath()">Clear Path</button><button class="btn-success" style="flex:1" onclick="saveEditedPath()">Save Path</button><button class="btn-danger" style="flex:1" onclick="cancelEditedPath()">Cancel</button></div>`
                                 : `<div style="margin-top: 15px;"><strong style="font-size: 0.85rem; color: #aaa;">DEPARTURES & SCHEDULES:</strong><div style="margin: 8px 0;">${depsHtml}</div>
                                    <div style="display:flex; gap:5px;"><input type="time" id="time_${trip.trip_id}" style="margin:0;"><button class="btn-success" style="width:auto; padding: 0 15px;" onclick="addDeparture('${trip.trip_id}')">Add</button></div></div>`}
                             </div>`;
@@ -582,7 +640,7 @@
             savedPolylines.forEach(p => map.removeLayer(p)); savedPolylines = [];
             trips.forEach(trip => {
                 // Ensure shape is valid and not hidden by default
-                if (trip.shape && trip.shape.length > 0 && trip.trip_id !== activeTripId && !tripHidden[trip.trip_id]) {
+                if (trip.shape && trip.shape.length > 0 && trip.trip_id !== activeTripId && trip.trip_id !== editingPathTripId && !tripHidden[trip.trip_id]) {
                     savedPolylines.push(L.polyline(trip.shape, { color: '#cc0000', weight: 4, opacity: 0.6 }).addTo(map));
                 }
             });
