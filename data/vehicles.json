@@ -1,0 +1,662 @@
+{
+  "transmixt": {
+    "8": {
+      "licensePlate": "B 126 TMX",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["471 Bistrița - Ardan", "503 Bistrița - Bistrița Bârgăului - Colibița"]
+    },
+    "28": {
+      "licensePlate": "BN 10 TMX",
+      "model": "Mercedes-Benz Citaro Ü"
+      ,
+      "assignedRoutes": ["10"]
+    },
+    "34": {
+      "licensePlate": "BN 38 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["3"]
+    },
+    "36": {
+      "licensePlate": "Unknown",
+      "model": "Mercedes-Benz Citaro G"
+    },
+    "37": {
+      "licensePlate": "BN 54 TMX",
+      "model": "Mercedes-Benz Citaro"
+    },
+    "40": {
+      "licensePlate": "BN 71 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["3"]
+    },
+    "41": {
+      "licensePlate": "BN 73 TMX",
+      "model": "Mercedes-Benz Citaro"
+    },
+    "42": {
+      "licensePlate": "BN 76 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["3"]
+    },
+    "43": {
+      "licensePlate": "BN 79 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["3"]
+    },
+    "47": {
+      "licensePlate": "BN 04 TMX",
+      "model": "Mercedes-Benz Citaro",
+      "assignedRoutes": ["13", "7"]
+    },
+    "49": {
+      "licensePlate": "BN 74 TMX",
+      "model": "Mercedes-Benz Citaro Facelift",
+      "assignedRoutes": ["13"]
+    },
+    "51": {
+      "licensePlate": "BN 20 TMX",
+      "model": "Mercedes-Benz Citaro Ü",
+      "assignedRoutes": ["6"]
+    },
+    "52": {
+      "licensePlate": "BN 07 TMX",
+      "model": "Mercedes-Benz Citaro",
+      "assignedRoutes": ["5","13"]
+    },
+    "53": {
+      "licensePlate": "B 156 TMX",
+      "model": "Guleryuz Ecoline 10"
+    },
+    "54": {
+      "licensePlate": "B 157 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["3"]
+    },
+    "55": {
+      "licensePlate": "B 158 TMX",
+      "model": "Guleryuz Ecoline 12",
+      "assignedRoutes": ["1"]
+    },
+    "61": {
+      "licensePlate": "BN 70 TMX",
+      "model": "Mercedes-Benz Citaro Facelift",
+      "assignedRoutes": ["9","13","18"]
+    },
+    "62": {
+      "licensePlate": "BN 72 TMX",
+      "model": "Mercedes-Benz Citaro Facelift"
+    },
+    "63": {
+      "licensePlate": "BN 75 TMX",
+      "model": "Mercedes-Benz Citaro Facelift",
+      "assignedRoutes": ["5","13"]
+    },
+    "64": {
+      "licensePlate": "BN 59 TMX",
+      "model": "Mercedes-Benz Citaro C2",
+      "assignedRoutes": ["13"]
+    },
+    "65": {
+      "licensePlate": "BN 61 TMX",
+      "model": "Mercedes-Benz Citaro C2",
+      "assignedRoutes": ["2"]
+    },
+    "66": {
+      "licensePlate": "BN 62 TMX",
+      "model": "Mercedes-Benz Citaro C2",
+      "assignedRoutes": ["13"]
+    },
+    "67": {
+      "licensePlate": "BN 57 TMX",
+      "model": "Mercedes-Benz Citaro C2",
+      "assignedRoutes": ["8"]
+    },
+    "68": {
+      "licensePlate": "B 01 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["1"]
+    },
+    "69": {
+      "licensePlate": "B 107 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["2"]
+    },
+    "70": {
+      "licensePlate": "B 108 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["1"]
+    },
+    "71": {
+      "licensePlate": "B 115 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["2"]
+    },
+    "72": {
+      "licensePlate": "B 116 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["2"]
+    },
+    "73": {
+      "licensePlate": "B 118 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["2"]
+    },
+    "74": {
+      "licensePlate": "B 159 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["2"]
+    },
+    "75": {
+      "licensePlate": "B 165 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["1"]
+    },
+    "76": {
+      "licensePlate": "B 162 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "77": {
+      "licensePlate": "B 164 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "80": {
+      "licensePlate": "BN 95 TMX",
+      "model": "Mercedes-Benz Citaro G"
+    },
+    "82": {
+      "licensePlate": "BN 37 TMX",
+      "model": "Mercedes-Benz Citaro G"
+    },
+    "83": {
+      "licensePlate": "BN 74 TNR",
+      "model": "VW Crafter",
+      "assignedRoutes": ["18","14","16"]
+    },
+    "86": {
+      "licensePlate": "BN 71 ECO",
+      "model": "SOR EBN 9,5"
+    },
+    "87": {
+      "licensePlate": "BN 80 ECO",
+      "model": "SOR EBN 9,5"
+    },
+    "88": {
+      "licensePlate": "BN 61 ECO",
+      "model": "SOR EBN 9,5"
+    },
+    "89": {
+      "licensePlate": "BN 67 ECO",
+      "model": "SOR EBN 9,5"
+    },
+    "90": {
+      "licensePlate": "BN 62 ECO",
+      "model": "SOR EBN 9,5"
+    },
+    "91": {
+      "licensePlate": "BN 70 ECO",
+      "model": "SOR EBN 9,5"
+    },
+    "92": {
+      "licensePlate": "BN 64 ECO",
+      "model": "SOR EBN 9,5"
+    },
+    "93": {
+      "licensePlate": "BN 63 ECO",
+      "model": "SOR EBN 9,5"
+    },
+    "94": {
+      "licensePlate": "BN 48 ECO",
+      "model": "SOR EBN 9,5"
+    },
+    "95": {
+      "licensePlate": "BN 68 ECO",
+      "model": "SOR EBN 9,5"
+    },
+    "101": {
+      "licensePlate": "B 161 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "102": {
+      "licensePlate": "B 163 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "103": {
+      "licensePlate": "B 166 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "104": {
+      "licensePlate": "B 168 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "105": {
+      "licensePlate": "BN 09 TNR",
+      "model": "Mercedes-Benz Integro II",
+      "assignedRoutes": ["138 Beclean - Agrieșel"]
+    },
+    "106": {
+      "licensePlate": "BN 12 TNR",
+      "model": "Mercedes-Benz Integro II M",
+      "assignedRoutes": ["142 Bistrița - Breaza"]
+    },
+    "107": {
+      "licensePlate": "BN 01 TMX",
+      "model": "Mercedes-Benz Integro II M",
+      "assignedRoutes": ["493 Bistrița - Gledin"]
+    },
+    "108": {
+      "licensePlate": "BN 02 TMX",
+      "model": "Setra S419 UL-GT",
+      "assignedRoutes": ["476 Bistrița - Budacu de Sus", "476 Bistrița - Budacu de Sus (via Satu Nou)"]
+    },
+    "109": {
+      "licensePlate": "BN 05 TNR",
+      "model": "Irisbus Crossway",
+      "assignedRoutes": ["478 Bistrița - Satu Nou"]
+    },
+    "110": {
+      "licensePlate": "BN 75 TNR",
+      "model": "VW Crafter",
+      "assignedRoutes": ["474 Bistrița - Buduș","478 Bistrița - Satu Nou"]
+    },
+    "112": {
+      "licensePlate": "B 78 KAJ",
+      "model": "VW Crafter",
+      "assignedRoutes": ["506 Bistrița - Cușma"]
+    },
+    "113": {
+      "licensePlate": "BN 68 TMX",
+      "model": "Irisbus Crossway",
+      "assignedRoutes": ["503 Bistrița - Bistrița Bârgăului - Colibița"]
+    },
+    "114": {
+      "licensePlate": "BN 90 TMX",
+      "model": "Setra S419 UL-GT",
+      "assignedRoutes": ["502 Bistrița - Mureșenii Bârgăului"]
+    },
+    "115": {
+      "licensePlate": "BN 91 TMX",
+      "model": "Setra S419 UL-GT",
+      "assignedRoutes": ["502 Bistrița - Mureșenii Bârgăului","476 Bistrița - Budacu de Sus","476 Bistrița - Budacu de Sus (via Satu Nou)"]
+    },
+    "116": {
+      "licensePlate": "BN 92 TMX",
+      "model": "Setra S419 UL-GT",
+      "assignedRoutes": ["502 Bistrița - Mureșenii Bârgăului"]
+    },
+    "118": {
+      "licensePlate": "BN 03 TNR",
+      "model": "Mercedes-Benz Integro II M",
+      "assignedRoutes": ["910 Bistrița - Valea Vinului"]
+    },
+    "119": {
+      "licensePlate": "BN 04 TNR",
+      "model": "Mercedes-Benz Integro II",
+      "assignedRoutes": ["911 Bistrița - Șanț","912 Bistrița - Șanț"]
+    },
+    "120": {
+      "licensePlate": "BN 07 TNR",
+      "model": "Mercedes-Benz Integro II",
+      "assignedRoutes": ["911 Bistrița - Șanț","912 Bistrița - Șanț"]
+    },
+    "121": {
+      "licensePlate": "BN 08 TNR",
+      "model": "Mercedes-Benz Integro II",
+      "assignedRoutes": ["911 Bistrița - Șanț","912 Bistrița - Șanț"]
+    },
+    "122": {
+      "licensePlate": "BN 55 TMX",
+      "model": "Setra S419 UL-GT"
+    },
+    "123": {
+      "licensePlate": "BN 02 TNR",
+      "model": "Irisbus Evadys H"
+    },
+    "124": {
+      "licensePlate": "B 160 TMX",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["485 Bistrița - Lunca"]
+    },
+    "133": {
+      "licensePlate": "BN 21 TMX",
+      "model": "Mercedes-Benz Citaro Facelift"
+    },
+    "141": {
+      "licensePlate": "BN 21 TNR",
+      "model": "Mercedes-Benz Citaro Facelift",
+      "assignedRoutes": ["13"]
+    },
+    "142": {
+      "licensePlate": "BN 44 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["3"]
+    },
+    "143": {
+      "licensePlate": "BN 14 TMX",
+      "model": "Guleryuz Ecoline 10",
+      "assignedRoutes": ["3"]
+    },
+    "145": {
+      "licensePlate": "BN 43 TMX",
+      "model": "Mercedes-Benz Citaro"
+    },
+    "147": {
+      "licensePlate": "BN 42 TMX",
+      "model": "Mercedes-Benz Citaro",
+      "assignedRoutes": ["8", "12"]
+    },
+    "149": {
+      "licensePlate": "B 191 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "150": {
+      "licensePlate": "B 192 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "151": {
+      "licensePlate": "B 193 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "152": {
+      "licensePlate": "B 194 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "153": {
+      "licensePlate": "B 195 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "154": {
+      "licensePlate": "B 196 TMX",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "156": {
+      "licensePlate": "B 197 TMX",
+      "model": "Guleryuz Ecoline 12",
+      "assignedRoutes": ["2"]
+    },
+    "157": {
+      "licensePlate": "B 198 TMX",
+      "model": "Guleryuz Ecoline 12",
+      "assignedRoutes": ["1"]
+    },
+    "159": {
+      "licensePlate": "B 199 TMX",
+      "model": "Guleryuz Ecoline 12",
+      "assignedRoutes": ["1"]
+    },
+    "160": {
+      "licensePlate": "B 181 TMX",
+      "model": "Setra S416 UL",
+      "assignedRoutes": ["364 Bistrița - Milaș"]
+    },
+    "161": {
+      "licensePlate": "B 182 TMX",
+      "model": "Setra S416 UL",
+      "assignedRoutes": ["244 Beclean - Cireșoaia", "247 Beclean - Jimbor"]
+    },
+    "163": {
+      "licensePlate": "BN 03 TMX",
+      "model": "Setra S419 UL",
+      "assignedRoutes": ["244 Beclean - Cireșoaia", "246 Beclean - Chiochiș"]
+    },
+    "162": {
+      "licensePlate": "Unknown",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "164": {
+      "licensePlate": "B 170 TMX",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["358 Bistrița - Fântânele"]
+    },
+    "165": {
+      "licensePlate": "B 171 TMX",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["387 Bistrița - Silivașu de Câmpie", "471 Bistrița - Ardan"]
+    },
+    "166": {
+      "licensePlate": "B 174 TMX",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["361 Bistrița - Vermeș"]
+    },
+    "167": {
+      "licensePlate": "B 180 TMX",
+      "model": "Setra S416 UL",
+      "assignedRoutes": ["363 Bistrița - Urmeniș","368 Bistrița - Teaca","366 Bistrița - Archiud"]
+    },
+    "168": {
+      "licensePlate": "B 104 TMX",
+      "model": "Mercedes-Benz Intouro II",
+      "assignedRoutes": ["367 Bistrița - Pinticu","320 Bistrița - Tărpiu","368 Bistrița - Teaca"]
+    },
+    "169": {
+      "licensePlate": "B 173 TMX",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["384 Bistrița - Albeștii Bistriței","364 Bistrița - Milaș","367 Bistrița - Pinticu"]
+    },
+    "170": {
+      "licensePlate": "B 172 TMX",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["329 Bistrița - Bretea","354 Bistrița - Caila","501 Bistrița - Piatra Fântânele","390 Bistrița - Sâniacob"]
+    },
+    "171": {
+      "licensePlate": "B 175 TMX",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["354 Bistrița - Caila","329 Bistrița - Bretea","361 Bistrița - Vermeș"]
+    },
+    "172": {
+      "licensePlate": "B 136 TMX",
+      "model": "Mercedes-Benz Intouro II L",
+      "assignedRoutes": ["136 Bistrița - Molișet"]
+    },
+    "173": {
+      "licensePlate": "B 140 TMX",
+      "model": "Mercedes-Benz Intouro II",
+      "assignedRoutes": ["470 Bistrița - Posmuș"]
+    },
+    "175": {
+      "licensePlate": "B 24 TMX",
+      "model": "Setra S415 UL Business",
+      "assignedRoutes": ["359 Bistrița - Țăgșor","368 Bistrița - Teaca","476 Bistrița - Budacu de Sus"]
+    },
+    "176": {
+      "licensePlate": "B 190 TMX",
+      "model": "Ford e-Transit",
+      "assignedRoutes": ["329 Bistrița - Bretea", "354 Bistrița - Caila", "361 Bistrița - Vermeș"]
+    },
+    "177": {
+      "licensePlate": "BN 70 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "178": {
+      "licensePlate": "BN 55 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "179": {
+      "licensePlate": "BN 56 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "180": {
+      "licensePlate": "BN 71 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "181": {
+      "licensePlate": "Unknown",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "182": {
+      "licensePlate": "BN 73 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "183": {
+      "licensePlate": "Unknown",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "184": {
+      "licensePlate": "BN 76 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "185": {
+      "licensePlate": "Unknown",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "186": {
+      "licensePlate": "Unknown",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "187": {
+      "licensePlate": "BN 87 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "188": {
+      "licensePlate": "BN 89 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "189": {
+      "licensePlate": "Unknown",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "190": {
+      "licensePlate": "Unknown",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "191": {
+      "licensePlate": "BN 91 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "192": {
+      "licensePlate": "Unknown",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "193": {
+      "licensePlate": "BN 93 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "194": {
+      "licensePlate": "Unknown",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "195": {
+      "licensePlate": "Unknown",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "196": {
+      "licensePlate": "BN 97 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    },
+    "197": {
+      "licensePlate": "BN 98 PMB",
+      "model": "Karsan e-ATA 10",
+      "assignedRoutes": ["2"]
+    }
+  },
+  "ani-tour": {
+    "1": {
+      "licensePlate": "B 140 ANY",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["615 Bistrița - Năsăud", "808 Bistrița - Lunca Ilvei"]
+    },
+    "3": {
+      "licensePlate": "BN 20 ANY",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["615 Bistrița - Năsăud"]
+    },
+    "4": {
+      "licensePlate": "B 772 ANY",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["615 Bistrița - Năsăud"]
+    },
+    "6": {
+      "licensePlate": "BN 66 ANY (neconfirmat)",
+      "model": "Mercedes-Benz Integro II",
+      "assignedRoutes": ["628A Năsăud - Săsarm - Beclean - Suplai"]
+    },
+    "7": {
+      "licensePlate": "BN 75 ANY",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["628 Bistrița - Suplai", "630 Năsăud - Suplai"]
+    },
+    "8": {
+      "licensePlate": "BN 26 ANI (neconfirmat)",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["628B Năsăud - Beclean"]
+    },
+    "9": {
+      "licensePlate": "BN 54 ANY",
+      "model": "Setra S416 GT-HD",
+      "assignedRoutes": ["615 Bistrița - Năsăud", "633 Bistrița - Săsarm"]
+    },
+    "10": {
+      "licensePlate": "B 882 ANY",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["631 Năsăud - Săsarm", "630 Năsăud - Suplai"]
+    },
+    "11": {
+      "licensePlate": "BN 37 ANY (neconfirmat)",
+      "model": "Setra S416 GT-HD",
+      "assignedRoutes": ["630 Năsăud - Suplai"]
+    },
+    "15": {
+      "licensePlate": "BN 51 ANY (neconfirmat)",
+      "model": "Mercedes-Benz Citaro Facelift Ü",
+      "assignedRoutes": ["725 Năsăud - Telciu"]
+    },
+    "20": {
+      "licensePlate": "BN 08 ANY",
+      "model": "Setra S416 NF",
+      "assignedRoutes": ["817 Bistrița - Parva", "818 Năsăud - Parva"]
+    },
+    "21": {
+      "licensePlate": "BN 76 ANY",
+      "model": "Setra S415 NF",
+      "assignedRoutes": ["817 Bistrița - Parva", "818 Năsăud - Parva"]
+    },
+    "22": {
+      "licensePlate": "BN 65 ANY",
+      "model": "Mercedes-Benz Integro I",
+      "assignedRoutes": ["816 Năsăud - Lunca Leșului"]
+    },
+    "27": {
+      "licensePlate": "B 138 ANY",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["615 Bistrița - Năsăud"]
+    },
+    "28": {
+      "licensePlate": "B 139 ANY",
+      "model": "Mercedes-Benz Sprinter"
+    },
+    "29": {
+      "licensePlate": "BN 85 ANY",
+      "model": "Mercedes-Benz Sprinter",
+      "assignedRoutes": ["807 Bistrița - Leșu Ilvei"]
+    },
+    "31": {
+      "licensePlate": "BN 06 ANI",
+      "model": "Mercedes-Benz Integro II L",
+      "assignedRoutes": ["723 Bistrița - Romuli", "721 Bistrița - Dealul Ștefăniței"]
+    },
+    "32": {
+      "licensePlate": "BN 30 ANY",
+      "model": "Mercedes-Benz Integro II L",
+      "assignedRoutes": ["723 Bistrița - Romuli", "721 Bistrița - Dealul Ștefăniței"]
+    }
+  }
+}
