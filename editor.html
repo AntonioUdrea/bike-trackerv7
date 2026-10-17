@@ -223,20 +223,7 @@
     <div id="map"></div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
-            authDomain: "bike-trackerv7.firebaseapp.com",
-            databaseURL: "https://bike-trackerv7-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "bike-trackerv7",
-            storageBucket: "bike-trackerv7.firebasestorage.app",
-            messagingSenderId: "829142915200",
-            appId: "1:829142915200:web:cd37f3234ecb850421ae65"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        import { db, ref, set, get } from "./firebase.js";
         const EDITOR_PASSCODE = "bus2024";
 
         const map = L.map('map').setView([47.132, 24.491], 14);

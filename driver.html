@@ -5,21 +5,7 @@
     <title>Driver</title>
     <link rel="stylesheet" href="style.css">
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, set, push, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
-            authDomain: "bike-trackerv7.firebaseapp.com",
-            databaseURL: "https://bike-trackerv7-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "bike-trackerv7",
-            storageBucket: "bike-trackerv7.firebasestorage.app",
-            messagingSenderId: "829142915200",
-            appId: "1:829142915200:web:cd37f3234ecb850421ae65"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        import { db, ref, set, update, onDisconnect, loadMasterData } from "./firebase.js";
         const busRef = ref(db, 'bus');
         onDisconnect(busRef).set({ active: false });
 
@@ -38,9 +24,22 @@
         let tripStartTime = null;
         let tripDate = null;
         let stopLog = [];
+        let tripKey = null;          // Firebase key of the trip being driven (null = nothing to save)
+        let tripFinished = true;     // true while no trip is running; blocks late GPS callbacks / double saves
+        let tripWrittenOnce = false; // first save uses set(), later saves use update()
+        let lastFix = null;          // previous raw GPS fix, used for stop detection between fixes
         let currentLateness = '0';
         let currentDepId = null;
+        let currentTripId = null;
+        let currentDelayMin = 0;
         let visibilityListenerAdded = false;
+
+        // Tunables
+        const STOP_RADIUS_M = 30;        // how close counts as "at the stop"
+        const LOOKAHEAD_STOPS = 5;       // how many stops ahead we accept as the next stop reached
+        const MAX_ACCURACY_M = 100;      // ignore GPS fixes worse than this
+        const MIN_TRACK_STEP_M = 8;      // don't store track points closer than this (kills jitter while stopped)
+        const AUTOSAVE_MS = 120000;      // periodic save while driving, so a crash loses at most ~2 min
         let settings = {
                 nightStart: "20:30",
                 dayStart: "06:30"
@@ -151,6 +150,8 @@
 
         window.selectRoute = function (dep, routeId) {
             currentDepId = dep.departureId; // Track the current departure ID
+            currentTripId = dep.trip.trip_id;
+            currentDelayMin = 0;
 
             const trip = dep.trip;
             currentRouteName = `${trip.name} ${dep.time}`;
@@ -166,6 +167,7 @@
             routeStops = (trip.stop_sequence || []).map(seq => {
                 const stopObj = masterData.stops.find(s => s.id === seq.stop_id);
                 return {
+                    id: seq.stop_id,
                     name: stopObj ? stopObj.name : 'Unknown Stop',
                     lat: stopObj ? stopObj.lat : 0,
                     lng: stopObj ? stopObj.lng : 0,
@@ -176,7 +178,12 @@
             tripTrack = [];
             totalDistance = 0;
             tripStartTime = null;
-            tripDate = new Date().toISOString().slice(0, 10);
+            tripDate = localDateStr();
+            tripKey = `${tripDate}_${routeId}_${departureTime.replace(':', '')}`;
+            tripFinished = false;
+            tripWrittenOnce = false;
+            lastFix = null;
+            currentLateness = '0';
             stopLog = [];
             isAtStop = false;
             activeStopIndex = null;
@@ -188,6 +195,11 @@
             document.querySelector('.leftPanel').style.display = 'flex';
             renderStops();
             startTracking();
+        }
+
+        function localDateStr() {
+            const n = new Date();
+            return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
         }
 
         function getStopScheduledTime(stop) {
@@ -233,43 +245,56 @@
             requestWakeLock();
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
-                    const { latitude, longitude } = position.coords;
-                    updateTheme(latitude, longitude);
+                    const { latitude, longitude, accuracy } = position.coords;
+                    if (tripFinished || isIdleStandby) return;
+                    if (accuracy > MAX_ACCURACY_M) return;
+                    updateTheme();
+
+                    const here = [latitude, longitude];
                     const timeStr = new Date().toTimeString().slice(0, 8);
                     if (!tripStartTime) tripStartTime = timeStr;
-                    if (tripTrack.length > 0) {
-                        const prev = tripTrack[tripTrack.length - 1];
-                        totalDistance += getDistance([prev.lat, prev.lng], [latitude, longitude]);
+
+                    // Store a track point only after the bus has actually moved a bit
+                    const lastPt = tripTrack[tripTrack.length - 1];
+                    const moved = lastPt ? getDistance([lastPt.lat, lastPt.lng], here) : Infinity;
+                    if (moved >= MIN_TRACK_STEP_M) {
+                        if (lastPt) totalDistance += moved;
+                        tripTrack.push({ lat: +latitude.toFixed(6), lng: +longitude.toFixed(6), t: timeStr });
                     }
-                    tripTrack.push({ lat: latitude, lng: longitude, t: timeStr });
-                    checkStop([latitude, longitude]);
+
+                    checkStop(here, lastFix);
+                    lastFix = here;
+                    if (tripFinished) return; // checkStop may have just completed the trip
                     pushToFirebase(latitude, longitude);
                     renderStops();
                 },
                 (error) => {
                     console.error(error.message);
-                    navigator.geolocation.clearWatch(watchId);
-                    watchId = null;
-                    setTimeout(() => { if (routeStops.length > 0) startTracking(); }, 3000);
+                    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+                    if (error.code === error.PERMISSION_DENIED) {
+                        alert('Locatia este blocata. Activeaz-o din setarile browserului.');
+                        return;
+                    }
+                    setTimeout(() => {
+                        if (routeStops.length > 0 && !tripFinished && !isIdleStandby) startTracking();
+                    }, 3000);
                 },
                 { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
             );
-            timerInterval = setInterval(renderStops, 5000);
+
+            // periodic autosave (replaces the old no-op renderStops timer)
+            if (timerInterval === null) timerInterval = setInterval(saveTrip, AUTOSAVE_MS);
 
             if (!visibilityListenerAdded) {
                 visibilityListenerAdded = true;
-
                 document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible') {
-                        requestWakeLock();
-
-                        if (
-                            watchId === null &&
-                            routeStops.length > 0 &&
-                            !isIdleStandby
-                        ) {
-                            startTracking();
-                        }
+                    if (document.visibilityState === 'hidden') {
+                        saveTrip(); // phone locked / app backgrounded: persist what we have
+                        return;
+                    }
+                    requestWakeLock();
+                    if (watchId === null && routeStops.length > 0 && !isIdleStandby && !tripFinished) {
+                        startTracking();
                     }
                 });
             }
@@ -290,150 +315,139 @@
                 active: shouldShowLive,
                 lat, lng,
                 routeId: currentRouteId,
+                tripId: currentTripId,
+                departureId: currentDepId,
                 route: currentRouteName,
                 nextStop: nextStop.name,
+                nextStopId: nextStop.id || null,
+                delay: currentDelayMin,
                 scheduledTime,
                 status: currentLateness
             });
         }
 
-        window.endRoute = async function () {
-            await saveTrip();
-            await set(busRef, { active: false });
-            routeStops = [];
-            currentStopIndex = 0;
-            stopLog = [];
-            isAtStop = false;
-            activeStopIndex = null;
-            isIdleStandby = false;
-
-            document.querySelector('.leftPanel').style.display = 'flex';
-            document.getElementById('driverScreen').style.display = 'none';
-            showRouteList();
-        }
-
+        // Never wipes data: the first write of a trip uses set(), later ones use update(),
+        // and `stops` is only included when there is something to store.
+        // The payload is built synchronously, so callers can reset state right after calling this
+        // (and must NOT await it: offline, the promise only resolves once the server acks).
         async function saveTrip() {
-            if (tripTrack.length < 2) return;
-            const endTime = new Date().toTimeString().slice(0, 8);
-            const tripKey = `${tripDate}_${currentRouteId}_${departureTime.replace(':', '')}`;
-            const tripsRef = ref(db, `trips/${tripKey}`);
-
-            await set(tripsRef, {
+            if (!tripKey || tripTrack.length < 2) return;
+            const data = {
                 routeName: currentRouteName,
                 routeId: currentRouteId,
                 date: tripDate,
                 departureTime,
                 startTime: tripStartTime,
-                endTime,
+                endTime: new Date().toTimeString().slice(0, 8),
                 distanceKm: (totalDistance / 1000).toFixed(2),
-                track: [...tripTrack], // [... ] creates a safe copy so it isn't lost if cleared instantly
-                stops: [...stopLog]    // Safe copy
-            });
+                track: [...tripTrack]
+            };
+            if (stopLog.length > 0) data.stops = [...stopLog];
+
+            const write = tripWrittenOnce ? update : set;
+            tripWrittenOnce = true;
+            try {
+                await write(ref(db, `trips/${tripKey}`), data);
+            } catch (e) {
+                console.error('Trip save failed:', e);
+            }
         }
 
-        function checkStop(latlng) {
-            if (isIdleStandby || currentStopIndex >= routeStops.length) return;
+        // Shortest distance (metres) from point p to the segment a-b. All points are [lat, lng].
+        // Lets us detect a stop even if no GPS fix landed inside its radius.
+        function distToSegment(p, a, b) {
+            const k = Math.cos(p[0] * Math.PI / 180);
+            const toXY = q => [(q[1] - p[1]) * 111320 * k, (q[0] - p[0]) * 110540];
+            const [ax, ay] = toXY(a);
+            const [bx, by] = toXY(b);
+            const dx = bx - ax, dy = by - ay;
+            const len2 = dx * dx + dy * dy;
+            let t = len2 ? -(ax * dx + ay * dy) / len2 : 0;
+            t = Math.max(0, Math.min(1, t));
+            return Math.hypot(ax + t * dx, ay + t * dy);
+        }
 
-            const radiusThreshold = 30; // 30-meter radius threshold
+        function checkStop(here, prev) {
+            if (tripFinished || isIdleStandby || currentStopIndex >= routeStops.length) return;
 
             if (!isAtStop) {
-                // Phase 1: Look ahead to check if we are entering any remaining stop (handles diversions & skipping)
-                for (let i = currentStopIndex; i < routeStops.length; i++) {
+                // Phase 1: are we entering one of the next few stops? (handles skipped stops / diversions)
+                const lastIdx = Math.min(routeStops.length - 1, currentStopIndex + LOOKAHEAD_STOPS);
+                for (let i = currentStopIndex; i <= lastIdx; i++) {
                     const stop = routeStops[i];
-                    const distance = getDistance(latlng, [stop.lat, stop.lng]);
+                    const target = [stop.lat, stop.lng];
+                    const dist = prev ? distToSegment(target, prev, here) : getDistance(here, target);
+                    if (dist > STOP_RADIUS_M) continue;
 
-                    if (distance <= radiusThreshold) {
-                        currentStopIndex = i;
+                    // stops we jumped over were never detected: record them instead of silently dropping them
+                    for (let j = currentStopIndex; j < i; j++) logSkippedStop(routeStops[j]);
+                    currentStopIndex = i;
+
+                    if (i === routeStops.length - 1) {
+                        // last stop: finish as soon as we touch it
+                        processStopArrivalAndExit(stop);
+                        handleRouteCompletion();
+                    } else {
                         activeStopIndex = i;
                         isAtStop = true;
-
-                        // SPECIAL RULE: If this is the very last stop of the route, end immediately on "touch"
-                        if (currentStopIndex === routeStops.length - 1) {
-                            processStopArrivalAndExit(stop);
-                            handleRouteCompletion();
-                            return;
-                        }
-
-                        console.log(`Arrived at stop: ${stop.name}`);
-                        break;
                     }
-                }
-            } else {
-                // Phase 2: The bus was dwelling at a stop, check if it has now LEFT the radius
-                const activeStop = routeStops[activeStopIndex];
-
-                if (!activeStop) {
-                    isAtStop = false;
-                    activeStopIndex = null;
                     return;
                 }
-                const distance = getDistance(latlng, [activeStop.lat, activeStop.lng]);
+            } else {
+                // Phase 2: dwelling at a stop; log it once we have LEFT the radius
+                const activeStop = routeStops[activeStopIndex];
+                if (!activeStop) { isAtStop = false; activeStopIndex = null; return; }
 
-                if (distance > radiusThreshold) {
+                if (getDistance(here, [activeStop.lat, activeStop.lng]) > STOP_RADIUS_M) {
                     processStopArrivalAndExit(activeStop);
-
-                    // Reset dwell state and move to next stop
                     isAtStop = false;
                     activeStopIndex = null;
                     currentStopIndex++;
-
-                    if (currentStopIndex >= routeStops.length) {
-                        handleRouteCompletion();
-                    }
+                    if (currentStopIndex >= routeStops.length) handleRouteCompletion();
                 }
             }
         }
 
-        // Helper function to log times and calculate lateness when leaving a stop
         function processStopArrivalAndExit(stop) {
             const actualTime = new Date().toTimeString().slice(0, 5);
             const scheduledTime = getStopScheduledTime(stop);
             const [sh, sm] = scheduledTime.split(':').map(Number);
             const [ah, am] = actualTime.split(':').map(Number);
-            const diffMins = (ah * 60 + am) - (sh * 60 + sm);
+            let diffMins = (ah * 60 + am) - (sh * 60 + sm);
+            // keep the difference sane across midnight (23:58 vs 00:02 = +4, not -1436)
+            if (diffMins > 720) diffMins -= 1440;
+            if (diffMins < -720) diffMins += 1440;
 
+            currentDelayMin = diffMins;
             currentLateness = diffMins === 0 ? "0" :
-                diffMins > 0 ? `+${diffMins}'` :
-                    `${diffMins}'`;
+                diffMins > 0 ? `+${diffMins}'` : `${diffMins}'`;
 
-            stopLog.push({
-                name: stop.name,
-                scheduled: scheduledTime,
-                actual: actualTime,
-                diff: diffMins
-            });
+            stopLog.push({ name: stop.name, scheduled: scheduledTime, actual: actualTime, diff: diffMins });
         }
 
-        // Handles what happens when a trip reaches its final destination
-        async function handleRouteCompletion() {
+        function logSkippedStop(stop) {
+            stopLog.push({ name: stop.name, scheduled: getStopScheduledTime(stop), skipped: true });
+        }
 
-            await saveTrip();
+        // Called once when the last stop is reached. Safe against double calls.
+        function handleRouteCompletion() {
+            if (tripFinished) return;
+            tripFinished = true;
+            stopAllTracking();   // stop GPS first so nothing else touches the trip while we wrap up
 
-            stopAllTracking();
-
-            await set(busRef, {
-                active: false
-            });
+            saveTrip();          // not awaited on purpose (see saveTrip)
+            set(busRef, { active: false });
 
             const nextDepInfo = findNextScheduledDeparture();
-
             if (nextDepInfo) {
-
-                // completely reset previous trip state
-
                 isAtStop = false;
                 activeStopIndex = null;
                 currentStopIndex = 0;
-
                 selectRoute(nextDepInfo, nextDepInfo.routeId);
-
             } else {
-
                 enterIdleStandbyScreen();
-
             }
         }
-
 
         function findNextScheduledDeparture() {
             const currentDep = masterData.departures.find(d => d.id === currentDepId);
@@ -459,6 +473,7 @@
         // Displays the screen with no route number, lateness, or stops, but keeps functional controls
         function enterIdleStandbyScreen() {
             isIdleStandby = true;
+            tripKey = null; // trip is already saved; nothing left to (over)write
             routeStops = [];
             currentStopIndex = 0;
             stopLog = [];
@@ -495,13 +510,15 @@
         }
 
         window.endRoute = function () {
-            // If the driver manually ends the route while inside a stop radius, log it before saving
-            if (isAtStop && activeStopIndex !== null) {
+            // On the idle standby screen the trip was already saved at the last stop: don't save again.
+            const wasRunning = !tripFinished && !isIdleStandby && routeStops.length > 0;
+            if (wasRunning && isAtStop && activeStopIndex !== null) {
                 processStopArrivalAndExit(routeStops[activeStopIndex]);
             }
-
-            saveTrip();
+            tripFinished = true;
             stopAllTracking();
+            if (wasRunning) saveTrip();
+            tripKey = null;
             set(busRef, { active: false });
 
             routeStops = [];
@@ -526,15 +543,8 @@
         // LOAD DATA FROM FIREBASE AT STARTUP
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                const snapshot = await get(ref(db, 'master_transit_data'));
-                if (snapshot.exists()) {
-                    masterData = snapshot.val();
-                    masterData.stops = masterData.stops || [];
-                    masterData.routes = masterData.routes || [];
-                    masterData.trips = masterData.trips || [];
-                    masterData.departures = masterData.departures || [];
-                    settings = masterData.settings || settings;
-                }
+                masterData = await loadMasterData();
+                settings = masterData.settings || settings;
                 showRouteList();
                 updateTheme();
                 setInterval(updateTheme, 60000);

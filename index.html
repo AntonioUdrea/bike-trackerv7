@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta charset="UTF-8">
     
-    <title>Map</title>
+    <title>Harta Linii - Live</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -214,17 +214,7 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
-            authDomain: "bike-trackerv7.firebaseapp.com",
-            databaseURL: "https://bike-trackerv7-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "bike-trackerv7"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        import { db, ref, onValue, loadMasterData, esc } from "./firebase.js";
 
         // Map setup
         const map = L.map('map', { fullscreenControl: true, fullscreenControlOptions: { position: 'topright' }, zoomControl: false }).setView([47.132, 24.491], 14);
@@ -240,17 +230,38 @@
         let stopMarkers = [];
         let busMarker = null;
         let lastStopPanelName = null;
+        let openTrip = null, selectedDepId = null, fittedTrip = null;
+
+        // ---- live helpers: match on tripId/departureId (old drivers: exact "TRIP HH:MM" name) ----
+        const isLiveTrip = (trip, dep) => {
+            if (!liveData?.active) return false;
+            if (liveData.tripId) return liveData.tripId === trip.trip_id && (!dep || liveData.departureId === dep.id);
+            return liveData.routeId === trip.route_id &&
+                (dep ? liveData.route === `${trip.name} ${dep.time}` : String(liveData.route).startsWith(trip.name + ' '));
+        };
+        const liveDelay = () => typeof liveData?.delay === 'number' ? liveData.delay : 0;
+        const liveStopIdx = (trip) => {
+            const seq = trip.stop_sequence || [];
+            if (liveData?.nextStopId) { const i = seq.findIndex(s => s.stop_id === liveData.nextStopId); if (i >= 0) return i; }
+            return seq.findIndex(s => masterData.stops.find(x => x.id === s.stop_id)?.name === liveData?.nextStop);
+        };
+        const timeToMins = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+        const addMins = (t, n) => calcStopTime(t, n);
+        window.focusBus = () => { if (busMarker) map.setView(busMarker.getLatLng(), 16); };
+        function refreshOpenPanels() {
+            const b = document.getElementById('liveBanner');
+            if (b) {
+                b.style.display = liveData?.active ? 'block' : 'none';
+                if (liveData?.active) b.innerHTML = `<span style="color:var(--live-color)">●</span> Linia ${esc(liveData.routeId)} in cursa &middot; urmatoarea: ${esc(liveData.nextStop)} <u>vezi pe harta</u>`;
+            }
+            if (document.getElementById('bottomPanel').classList.contains('active') && lastStopPanelName) showStopPanel(lastStopPanelName, true);
+            if (document.getElementById('routeDetail').classList.contains('active') && openTrip) renderTripData(openTrip.trip, openTrip.route);
+        }
+        setInterval(refreshOpenPanels, 30000);
 
         async function initSystem() {
             try {
-                const snapshot = await get(ref(db, 'master_transit_data'));
-                if (snapshot.exists()) {
-                    masterData = snapshot.val();
-                    masterData.stops = masterData.stops || [];
-                    masterData.routes = masterData.routes || [];
-                    masterData.trips = masterData.trips || [];
-                    masterData.departures = masterData.departures || [];
-                }
+                masterData = await loadMasterData();
                 buildMenu();
                 drawGlobalStops();
             } catch(e) { 
@@ -260,7 +271,7 @@
 
         function buildMenu() {
             const menu = document.getElementById('sideMenu');
-            menu.innerHTML = '<div class="menuHeader">Selecteaza Linia</div>';
+            menu.innerHTML = '<div class="menuHeader">Selecteaza Linia</div><div id="liveBanner" onclick="focusBus()" style="display:none;padding:10px 20px;font-size:.9rem;cursor:pointer;border-bottom:1px solid var(--border-color);background:rgba(42,157,143,.12)"></div>';
             
             const sortedRoutes = [...masterData.routes].sort((a, b) => 
                 String(a.route_id).localeCompare(String(b.route_id), undefined, { numeric: true })
@@ -272,8 +283,8 @@
                 const routeName = route.name || 'Traseu';
                 
                 btn.innerHTML = `
-                    <div class="menuRouteBadge">${route.route_id}</div>
-                    <div class="menuRouteName">${routeName}</div>
+                    <div class="menuRouteBadge">${esc(route.route_id)}</div>
+                    <div class="menuRouteName">${esc(routeName)}</div>
                 `;
                 
                 btn.onclick = () => { 
@@ -290,7 +301,7 @@
             return `${Math.floor(total/60)%24}`.padStart(2,'0') + ':' + `${total%60}`.padStart(2,'0');
         }
 
-        function nowMins() {
+        function nowMins() { /* minutes since midnight */
             const n = new Date(); return n.getHours() * 60 + n.getMinutes();
         }
 
@@ -313,7 +324,7 @@
             });
         }
 
-        window.showStopPanel = function(stop) {
+        window.showStopPanel = function(stop, silent = false) {
             lastStopPanelName = stop;
             document.getElementById('panelTitle').textContent = stop.name;
             
@@ -329,15 +340,15 @@
                 
                 deps.forEach(dep => {
                     const stopTime = calcStopTime(dep.time, seqMatch.travel_minutes_from_start);
-                    const [sh, sm] = stopTime.split(':').map(Number);
-                    
-                    let sm2 = sh * 60 + sm;
-                    if (sm2 < nm) sm2 += 1440; 
-                    
-                    const diffMins = sm2 - nm;
-                    if (diffMins > 1440) return; 
-
-                    const isLive = liveData?.active && liveData.routeId === route.route_id && liveData.route.includes(trip.name);
+                    const signed = (((timeToMins(stopTime) - nm + 720) % 1440) + 1440) % 1440 - 720;
+                    const isLive = isLiveTrip(trip, dep);
+                    let diffMins;
+                    if (isLive) {
+                        if (liveStopIdx(trip) > trip.stop_sequence.indexOf(seqMatch)) return; // bus already passed this stop
+                        diffMins = Math.max(0, signed + liveDelay());
+                    } else {
+                        diffMins = signed < 0 ? signed + 1440 : signed;
+                    }
                     results.push({ trip, route, stopTime, diffMins, isLive });
                 });
             });
@@ -389,7 +400,7 @@
                     item.innerHTML = `
                         <div class="depBadge">${res.route.route_id}</div>
                         <div class="depInfo">
-                            <div class="depDirection" title="${res.trip.name}">${res.trip.name}</div>
+                            <div class="depDirection" title="${esc(res.trip.name)}">${esc(res.trip.name)}</div>
                         </div>
                         ${formatDepTime(res.stopTime, res.isLive, res.diffMins)}
                     `;
@@ -426,7 +437,7 @@
 
             document.getElementById('routeDetail').classList.remove('active');
             document.getElementById('bottomPanel').classList.add('active');
-            if(window.innerWidth < 768) toggleMobileSidebar();
+            if (!silent && window.innerWidth < 768) toggleMobileSidebar();
         }
 
         window.showRouteView = function(route, preselectedTrip = null) {
@@ -457,11 +468,13 @@
             select.value = startIndex;
             select.onchange = (e) => {
                 const selectedTrip = trips[e.target.value];
+                selectedDepId = null;
                 renderTripData(selectedTrip, route);
             };
             
             titleContainer.appendChild(select);
 
+            selectedDepId = preselectedTrip?.depId || null;
             renderTripData(trips[startIndex], route);
 
             document.getElementById('bottomPanel').classList.remove('active');
@@ -472,30 +485,46 @@
         }
 
         function renderTripData(trip, route) {
+            openTrip = { trip, route };
             if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
             if (trip.shape && trip.shape.length > 0) {
                 routeLayer = L.polyline(trip.shape, { color: '#e63946', weight: 4, opacity: 1 }).addTo(map);
+                if (fittedTrip !== trip.trip_id) { map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] }); fittedTrip = trip.trip_id; }
             }
 
             const list = document.getElementById('rdStopList');
             list.innerHTML = '';
 
-            let liveIdx = -1;
-            if (liveData?.active && liveData.routeId === route.route_id && liveData.route.includes(trip.name)) {
-                liveIdx = trip.stop_sequence.findIndex(s => {
-                    const st = masterData.stops.find(x => x.id === s.stop_id);
-                    return st && st.name === liveData.nextStop;
-                });
-            }
+            // Pick which departure the times are for: chosen > live > next upcoming > first
+            const deps = masterData.departures.filter(d => d.trip_id === trip.trip_id).sort((a, b) => a.time.localeCompare(b.time));
+            const nm = nowMins();
+            const liveDep = deps.find(d => isLiveTrip(trip, d));
+            const dep = deps.find(d => d.id === selectedDepId) || liveDep || deps.find(d => timeToMins(d.time) >= nm) || deps[0];
+            const baseTime = dep ? dep.time : '00:00';
+            const liveNow = !!dep && dep === liveDep;
+            const liveIdx = liveNow ? liveStopIdx(trip) : -1;
 
-            const deps = masterData.departures.filter(d => d.trip_id === trip.trip_id).sort((a,b) => a.time.localeCompare(b.time));
-            const baseTime = deps.length > 0 ? deps[0].time : '00:00';
+            if (deps.length) {
+                const pick = document.createElement('select');
+                pick.className = 'tripSelect';
+                pick.style.cssText = 'margin:0 16px 8px;width:calc(100% - 32px)';
+                deps.forEach(d => {
+                    const o = document.createElement('option');
+                    o.value = d.id;
+                    o.textContent = 'Plecare ' + d.time + (isLiveTrip(trip, d) ? '  ● live' : '');
+                    o.selected = d === dep;
+                    pick.appendChild(o);
+                });
+                pick.onchange = () => { selectedDepId = pick.value; renderTripData(trip, route); };
+                list.appendChild(pick);
+            }
 
             trip.stop_sequence.forEach((seq, i) => {
                 const stopData = masterData.stops.find(s => s.id === seq.stop_id);
                 if (!stopData) return;
                 
-                const time = calcStopTime(baseTime, seq.travel_minutes_from_start);
+                const sched = calcStopTime(baseTime, seq.travel_minutes_from_start);
+                const time = (liveNow && i >= liveIdx && liveDelay()) ? addMins(sched, liveDelay()) : sched;
                 const isLiveStop = i === liveIdx;
                 const isPassed = liveIdx >= 0 && i < liveIdx;
                 
@@ -507,7 +536,7 @@
                         <div class="rdDot ${isLiveStop ? 'liveStop' : isPassed ? 'passed' : ''}"></div>
                         <div class="rdLineSeg ${i===trip.stop_sequence.length-1 ? 'hidden':''}"></div>
                     </div>
-                    <span class="rdStopName ${isLiveStop ? 'current' : isPassed ? 'passed' : ''}">${stopData.name}</span>
+                    <span class="rdStopName ${isLiveStop ? 'current' : isPassed ? 'passed' : ''}">${esc(stopData.name)}</span>
                     <span class="rdStopTime ${isLiveStop ? 'live' : ''}">${time}</span>
                 `;
                 list.appendChild(row);
@@ -540,6 +569,7 @@
             liveData = snapshot.val();
             if (!liveData?.active) {
                 if (busMarker) { map.removeLayer(busMarker); busMarker = null; }
+                refreshOpenPanels();
                 return;
             }
             
@@ -547,7 +577,9 @@
             if (!busMarker) busMarker = L.marker(latlng, { icon: markerBus }).addTo(map).bindPopup('').openPopup();
             else busMarker.setLatLng(latlng);
             
-            busMarker.getPopup().setContent(`<b>Vehicul:</b> BN 29 TCB<br><b>Linia:</b> ${liveData.routeId}<br><b>Urmatoarea oprire:</b> ${liveData.nextStop} <b>la</b> ${liveData.scheduledTime}<br><b>${liveData.status}</b> față de grafic`).update();
+            const dl = liveDelay();
+            busMarker.getPopup().setContent(`<b>Vehicul:</b> BN 29 TCB<br><b>Linia:</b> ${esc(liveData.routeId)}<br><b>Urmatoarea oprire:</b> ${esc(liveData.nextStop)} <b>la</b> ${esc(liveData.scheduledTime)}<br><b>${dl === 0 ? 'La timp' : dl > 0 ? 'Intarziere ' + dl + ' min' : 'Devansare ' + (-dl) + ' min'}</b>`).update();
+            refreshOpenPanels();
         });
 
         window.addEventListener('DOMContentLoaded', initSystem);

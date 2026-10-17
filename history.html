@@ -2,12 +2,12 @@
 <html>
 
 <head>
-    <title>History</title>
+    <title>Istoric</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="style.css">
     <style>
         #historyScreen {
             display: flex;
@@ -108,75 +108,106 @@
         .slName { font-weight: bold; color: white; }
         .slTimes { display: flex; gap: 8px; font-size: 0.85rem; color: #aaa; }
         .slDiff { font-size: 0.9rem; font-weight: bold; }
+        .pageHeader { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; font-size: 1.3rem; font-weight: bold; border-bottom: 1px solid #333; }
+        #summary { display: flex; gap: 8px; padding: 12px 16px 4px; }
+        #summary > div { flex: 1; background: #1a1a1a; border-radius: 8px; padding: 8px; text-align: center; }
+        #summary b { display: block; font-size: 1.25rem; }
+        #summary span { font-size: .75rem; color: #888; }
+        #lineChips { display: flex; gap: 8px; padding: 10px 16px; overflow-x: auto; }
+        .chip { background: #222; color: #ccc; border: 1px solid #333; border-radius: 16px; padding: 5px 12px; cursor: pointer; white-space: nowrap; }
+        .chip.on { background: #007bff; color: white; border-color: #007bff; }
+        .dateHead { padding: 8px 20px; font-size: .85rem; color: #888; background: #181818; position: sticky; top: 0; }
+        .tripDelay { font-weight: bold; font-size: 1.1rem; }
+        @media (max-width: 700px) {
+            .mapBody { flex-direction: column; }
+            #tripMap { flex: 0 0 45%; }
+            #stopLog { width: auto; min-width: 0; border-left: none; border-top: 1px solid #333; flex: 1; }
+        }
         .emptyMsg { padding: 40px 20px; text-align: center; color: #555; font-size: 1.1rem; }
         .loadingMsg { padding: 40px 20px; text-align: center; color: #aaa; font-size: 1.1rem; }
         .noStopsMsg { padding: 20px 12px; text-align: center; color: #555; font-size: 0.9rem; }
     </style>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAVvYAjwplQaH82ehNXpfK25W3ORikigvE",
-            authDomain: "bike-trackerv7.firebaseapp.com",
-            databaseURL: "https://bike-trackerv7-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "bike-trackerv7",
-            storageBucket: "bike-trackerv7.firebasestorage.app",
-            messagingSenderId: "829142915200",
-            appId: "1:829142915200:web:cd37f3234ecb850421ae65"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        import { db, ref, get, remove, query, orderByKey, limitToLast, esc } from "./firebase.js";
 
         let tripMap = null;
         let trackLayer = null;
         let markerLayers = [];
 
-        async function loadTrips() {
-            const list = document.getElementById('tripList');
-            list.innerHTML = '<div class="loadingMsg">Se incarca...</div>';
-            const snapshot = await get(ref(db, 'trips'));
-            if (!snapshot.exists()) {
-                list.innerHTML = '<div class="emptyMsg">Nu exista curse inregistrate.</div>';
-                return;
-            }
-            const trips = [];
-            snapshot.forEach(child => { trips.push({ key: child.key, ...child.val() }); });
-            trips.sort((a, b) => b.date.localeCompare(a.date) || b.departureTime.localeCompare(a.departureTime));
-            list.innerHTML = '';
-            trips.forEach(trip => {
-                const routeId = trip.routeId || (trip.key ? trip.key.split('_')[1] : null);
-                const badgeHtml = routeId ? `<span class="routeBadge">Linia ${routeId}</span>` : '';
+        const TRIP_LIMIT = 200; // trips carry their full GPS track, so only fetch the latest ones
+        let allTrips = [], activeLine = null;
 
+        const lineOf = (t) => t.routeId || (t.key ? t.key.split('_')[1] : '');
+        function tripStats(t) {
+            const real = (t.stops || []).filter(s => !s.skipped && typeof s.diff === 'number');
+            const skipped = (t.stops || []).length - real.length;
+            const avg = real.length ? real.reduce((a, s) => a + s.diff, 0) / real.length : null;
+            const max = real.length ? Math.max(...real.map(s => s.diff)) : null;
+            const onTime = real.filter(s => Math.abs(s.diff) <= 1).length;
+            return { real, skipped, avg, max, onTime };
+        }
+        const fmtDelay = (m) => m === null ? '-' : (m > 0 ? '+' : '') + Math.round(m * 10) / 10 + "'";
+        const delayColor = (m) => m === null ? '#777' : m > 3 ? '#ff6b6b' : m > 1 ? '#ffb84d' : '#6bff8e';
+
+        async function loadTrips() {
+            document.getElementById('tripList').innerHTML = '<div class="loadingMsg">Se incarca...</div>';
+            const snapshot = await get(query(ref(db, 'trips'), orderByKey(), limitToLast(TRIP_LIMIT)));
+            allTrips = [];
+            snapshot.forEach(child => { allTrips.push({ key: child.key, ...child.val() }); });
+            allTrips.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.departureTime || '').localeCompare(a.departureTime || ''));
+            renderList();
+        }
+        window.setLine = (l) => { activeLine = l; renderList(); };
+
+        function renderList() {
+            const list = document.getElementById('tripList');
+            const lines = [...new Set(allTrips.map(lineOf).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+            document.getElementById('lineChips').innerHTML = lines.length < 2 ? '' :
+                [null, ...lines].map(l => `<button class="chip ${l === activeLine ? 'on' : ''}" onclick="setLine(${l === null ? 'null' : `'${esc(l)}'`})">${l === null ? 'Toate' : 'Linia ' + esc(l)}</button>`).join('');
+
+            const trips = activeLine ? allTrips.filter(t => lineOf(t) === activeLine) : allTrips;
+            const all = trips.map(tripStats);
+            const stopsN = all.reduce((a, s) => a + s.real.length, 0);
+            const avg = stopsN ? all.reduce((a, s) => a + s.real.reduce((b, x) => b + x.diff, 0), 0) / stopsN : null;
+            const onTimePct = stopsN ? Math.round(100 * all.reduce((a, s) => a + s.onTime, 0) / stopsN) : null;
+            document.getElementById('summary').innerHTML = trips.length ? `
+                <div><b>${trips.length}</b><span>curse</span></div>
+                <div><b>${trips.reduce((a, t) => a + (parseFloat(t.distanceKm) || 0), 0).toFixed(1)}</b><span>km</span></div>
+                <div><b style="color:${delayColor(avg)}">${fmtDelay(avg)}</b><span>intarziere medie</span></div>
+                <div><b>${onTimePct === null ? '-' : onTimePct + '%'}</b><span>la timp (±1')</span></div>` : '';
+
+            list.innerHTML = '';
+            if (!trips.length) { list.innerHTML = '<div class="emptyMsg">Nu exista curse inregistrate.</div>'; return; }
+            let lastDate = null;
+            trips.forEach((trip, idx) => {
+                if (trip.date !== lastDate) {
+                    lastDate = trip.date;
+                    const h = document.createElement('div'); h.className = 'dateHead'; h.textContent = trip.date || '-'; list.appendChild(h);
+                }
+                const st = all[idx];
                 const row = document.createElement('div');
                 row.className = 'tripRow';
-
                 const textDiv = document.createElement('div');
                 textDiv.className = 'tripRowText';
                 textDiv.innerHTML = `
                     <div class="tripRowTop">
-                        <span class="tripName">${badgeHtml}<span>${trip.routeName || '-'}</span></span>
-                        <span class="tripDate">${trip.date || '-'}</span>
+                        <span class="tripName"><span class="routeBadge">${esc(lineOf(trip)) || '?'}</span><span>${esc(trip.routeName) || '-'}</span></span>
+                        <span class="tripDelay" style="color:${delayColor(st.avg)}">${fmtDelay(st.avg)}</span>
                     </div>
                     <div class="tripMeta">
-                        <span>&#128344; ${trip.startTime || '-'} – ${trip.endTime || '-'}</span>
-                        <span>&#128205; ${trip.distanceKm || '0'} km</span>
-                    </div>
-                `;
+                        <span>&#128344; ${esc(trip.startTime) || '-'} – ${esc(trip.endTime) || '-'}</span>
+                        <span>&#128205; ${esc(trip.distanceKm) || '0'} km</span>
+                        ${st.real.length ? `<span>&#10003; ${st.real.length} statii${st.skipped ? ` <i style="color:#cc8800">(${st.skipped} nedetectate)</i>` : ''}</span>` : `<span style="color:#cc8800">&#9888; fara statii</span>`}
+                    </div>`;
                 textDiv.onclick = () => showTrip(trip);
-
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'deleteBtn';
                 deleteBtn.textContent = '🗑';
                 deleteBtn.onclick = (e) => {
                     e.stopPropagation();
-                    if (confirm('Stergi aceasta cursa?')) {
-                        remove(ref(db, `trips/${trip.key}`)).then(() => loadTrips());
-                    }
+                    if (confirm('Stergi aceasta cursa?')) remove(ref(db, `trips/${trip.key}`)).then(loadTrips);
                 };
-
                 row.appendChild(textDiv);
                 row.appendChild(deleteBtn);
                 list.appendChild(row);
@@ -190,7 +221,8 @@
             document.getElementById('historyScreen').style.display = 'none';
             document.getElementById('mapView').style.display = 'flex';
             document.getElementById('mapTitle').textContent = `${routePrefix}${trip.routeName || '-'}`;
-            document.getElementById('mapStats').textContent = `${trip.date} · ${trip.distanceKm} km · ${trip.startTime} – ${trip.endTime}`;
+            const ts = tripStats(trip);
+            document.getElementById('mapStats').textContent = `${trip.date} · ${trip.distanceKm} km · ${trip.startTime} – ${trip.endTime}` + (ts.real.length ? ` · medie ${fmtDelay(ts.avg)} · max ${fmtDelay(ts.max)}` : '');
 
             if (!tripMap) {
                 tripMap = L.map('tripMap').setView([47.132, 24.491], 14);
@@ -227,19 +259,31 @@
                 `;
                 stopLogDiv.appendChild(header);
                 trip.stops.forEach(s => {
-                    const color = s.diff === 0 ? '#ccc' : s.diff > 0 ? '#ff6b6b' : '#6bff8e';
-                    const diffText = s.diff === 0 ? 'La timp' : s.diff > 0 ? `+${s.diff}'` : `${s.diff}'`;
                     const row = document.createElement('div');
                     row.className = 'stopLogRow';
-                    row.innerHTML = `
-                        <span class="slName">${s.name}</span>
-                        <div class="slTimes">
-                            <span>${s.scheduled}</span>
-                            <span>→</span>
-                            <span>${s.actual}</span>
-                            <span class="slDiff" style="color:${color}">${diffText}</span>
-                        </div>
-                    `;
+                    if (s.skipped) {
+                        // stop was never detected (GPS gap, stop placed off the road, ...)
+                        row.innerHTML = `
+                            <span class="slName" style="color:#777">${esc(s.name)}</span>
+                            <div class="slTimes">
+                                <span>${esc(s.scheduled)}</span>
+                                <span>→</span>
+                                <span style="color:#777">nedetectata</span>
+                            </div>
+                        `;
+                    } else {
+                        const color = s.diff === 0 ? '#ccc' : s.diff > 0 ? '#ff6b6b' : '#6bff8e';
+                        const diffText = s.diff === 0 ? 'La timp' : s.diff > 0 ? `+${s.diff}'` : `${s.diff}'`;
+                        row.innerHTML = `
+                            <span class="slName">${esc(s.name)}</span>
+                            <div class="slTimes">
+                                <span>${esc(s.scheduled)}</span>
+                                <span>→</span>
+                                <span>${esc(s.actual)}</span>
+                                <span class="slDiff" style="color:${color}">${diffText}</span>
+                            </div>
+                        `;
+                    }
                     stopLogDiv.appendChild(row);
                 });
             } else {
@@ -258,9 +302,9 @@
 
 <body>
     <div id="historyScreen">
-        <div class="driverHeader" style="border-bottom: 1px solid #333;">
-            <div class="headerDate" style="color:white;">Istoric Curse</div>
-        </div>
+        <div class="pageHeader"><span>Istoric Curse</span><button class="chip" onclick="loadTrips()">&#8635;</button></div>
+        <div id="summary"></div>
+        <div id="lineChips"></div>
         <div id="tripList"></div>
     </div>
     <div id="mapView">
